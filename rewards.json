@@ -1,0 +1,28 @@
+{
+	"rewards": [
+		{
+			"type": "music",
+			"name": "музик",
+			"fields": {
+				"title": "",
+				"duration": 600
+			}
+		},
+		{
+			"type": "augury",
+			"name": "гадание",
+			"fields": {
+				"title": "%s сегодня",
+				"path": "D:/projects/go/src/github.com/kolllaka/poma-botv3.0/test/aug"
+			}
+		},
+		{
+			"type": "augury",
+			"name": "VIP",
+			"fields": {
+				"title": "VIP %s сегодня",
+				"path": "D:/projects/go/src/github.com/kolllaka/poma-botv3.0/test/aug"
+			}
+		}
+	]
+}

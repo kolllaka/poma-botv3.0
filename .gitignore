@@ -1,0 +1,7 @@
+.env
+/__test
+/logs
+/pomabot*
+/test
+go.mod
+go.sum

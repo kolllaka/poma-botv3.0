@@ -1,0 +1,141 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+	<meta charset="UTF-8">
+	<meta http-equiv="X-UA-Compatible" content="IE=edge">
+	<meta name="viewport" content="width=device-width, initial-scale=1.0">
+	<link rel="shortcut icon" href="./static/img/note.png" type="image/x-icon">
+	<link rel="stylesheet" href="./static/css/null.css">
+	<link rel="stylesheet" href="./static/css/music.css">
+	<title>music queue</title>
+	<script>
+		let myPlaylist = JSON.parse('{{ . }}') || []
+		// console.log(data);
+	</script>
+</head>
+
+<body>
+	<div class="wrapper">
+
+		<div class="page">
+
+			<div class="page__bg">
+				<img src="./static/img/bg.webp" alt="bg">
+			</div>
+
+			<div class="container">
+
+				<div class="page__content">
+
+					<h1 class="page__title">Музыка</h1>
+
+					<div class="page__body">
+						<div class="page__column">
+
+							<div id="rewardplayer">
+							</div>
+
+							<div id="controlpanel" class="controlpanel">
+								<ul class="controlpanel__body">
+
+									<li class="controlpanel__item">
+										<div class="info">
+											<div class="info__btns">
+												<div data-btn="skip" class="info__btn btn">скип</div>
+												<div data-btn="shuffle" class="info__btn btn">шафл</div>
+												<div data-btn="play" data-info="play" class="info__btn btn">&nbsp;</div>
+											</div>
+										</div>
+									</li>
+
+									<li class="controlpanel__item">
+										<div class="info">
+											<div class="info__btns">
+												<span class="info__title">громкость:</span>
+												<input data-info="volume" class="info__input" type="range" min="0"
+													max="100"></input>
+											</div>
+										</div>
+									</li>
+
+									<li class="controlpanel__item">
+										<div class="info">
+											<div class="info__body">
+												<span class="info__title">сейчас играет:</span>
+												<span data-info="name" class="info__text"></span>
+											</div>
+										</div>
+									</li>
+									<li class="controlpanel__item">
+										<div class="info">
+											<div class="info__body">
+												<span class="info__title">заказал:</span>
+												<span data-info="author" class="info__text"></span>
+											</div>
+										</div>
+									</li>
+								</ul>
+							</div>
+
+							<div id="myplayer">
+							</div>
+						</div>
+
+
+						<div class="page__column">
+
+							<div id="rewardPlaylist" class="playlist">
+								<div class="playlist__content">
+									<div class="playlist__title">Плейлист заказов</div>
+									<div class="playlist__row playlist__info">
+										общее количество треков: 0 на 0:00
+									</div>
+									<div class="itemplaylist__title">
+										<div class="itemplaylist__body">
+											<div class="itemplaylist__cell">№№</div>
+											<div class="itemplaylist__cell">закзчик</div>
+											<div class="itemplaylist__cell itemplaylist__cell-n">песня</div>
+											<div class="itemplaylist__cell">время</div>
+											<div class="itemplaylist__cell">удалить</div>
+										</div>
+									</div>
+									<ul class="playlist__row playlist__body">
+									</ul>
+								</div>
+							</div>
+
+							<div id="myPlaylist" class="playlist">
+								<div class="playlist__content">
+									<div class="playlist__title">Мой плейлист</div>
+									<div class="playlist__row playlist__info">
+										общее количество треков: 0 на 0:00
+									</div>
+									<div class="itemplaylist__title">
+										<div class="itemplaylist__body">
+											<div class="itemplaylist__cell">№№</div>
+											<div class="itemplaylist__cell itemplaylist__cell-n">песня</div>
+											<div class="itemplaylist__cell">время</div>
+											<div class="itemplaylist__cell">удалить</div>
+										</div>
+									</div>
+									<ul class="playlist__row playlist__body">
+									</ul>
+								</div>
+							</div>
+
+						</div>
+					</div>
+				</div>
+			</div>
+		</div>
+
+
+	</div>
+</body>
+
+<script src="https://www.youtube.com/iframe_api"></script>
+
+<script type="module" src="../static/js/music/music.js"></script>
+
+</html>
