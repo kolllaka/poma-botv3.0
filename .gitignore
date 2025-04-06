@@ -5,3 +5,4 @@
 /test
 go.mod
 go.sum
+!pomabot.v3.01.zip
