@@ -47,7 +47,7 @@ func (r *route) RunRoute(msg model.RewardMessage) (string, []byte, error) {
 	name := r.augFiles[num]
 
 	rBody := Message{
-		Title: fmt.Sprintf(r.conf.Title, msg.Username),
+		Title: fmt.Sprintf(r.conf.Title, msg.Reward.Username),
 		Link:  r.getLink(name),
 	}
 

@@ -51,7 +51,7 @@ func (r *rewards) HandleReward() {
 		for {
 			reward := <-reader
 
-			rewardName := strings.ToLower(reward.Name)
+			rewardName := strings.ToLower(reward.Reward.Name)
 
 			r.logger.Debug("reward received", logging.AnyAttr("reward", reward))
 

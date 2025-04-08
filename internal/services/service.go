@@ -78,13 +78,13 @@ func (s *service) GetMyPlaylist() []byte {
 // GetPlaylist implements Service.
 func (s *service) GetYoutubePlaylistBy(msg model.RewardMessage) []byte {
 	playlist := model.Playlist{
-		Author: msg.Username,
+		Author: msg.Reward.Username,
 	}
-	s.ymusic.GetPlaylistBy(msg.Text, &playlist)
+	s.ymusic.GetPlaylistBy(msg.Reward.Text, &playlist)
 
 	data := Responce{
 		Source:   YOUTUBE,
-		IsReward: msg.IsReward,
+		IsReward: msg.Reward.IsReward,
 		Data:     playlist,
 	}
 
@@ -97,13 +97,13 @@ func (s *service) GetYoutubePlaylistBy(msg model.RewardMessage) []byte {
 // GetMusic implements Service.
 func (s *service) GetYoutubeMusicBy(msg model.RewardMessage) []byte {
 	music := model.Music{
-		Author: msg.Username,
+		Author: msg.Reward.Username,
 	}
-	s.ymusic.GetMusicBy(msg.Text, &music)
+	s.ymusic.GetMusicBy(msg.Reward.Text, &music)
 
 	data := Responce{
 		Source:   YOUTUBE,
-		IsReward: msg.IsReward,
+		IsReward: msg.Reward.IsReward,
 		Data:     music,
 	}
 
