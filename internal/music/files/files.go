@@ -33,19 +33,20 @@ func New(
 }
 
 // GetMusicBy implements MusicService.
-func (f *files) GetMusicBy(name string, music *model.Music) error {
+func (f *files) GetMusicBy(name string) (model.Music, error) {
 	panic("unimplemented")
 }
 
 // GetPlaylistBy implements MusicService.
-func (f *files) GetPlaylistBy(name string, playlist *model.Playlist) error {
+func (f *files) GetPlaylistBy(name string) (model.Playlist, error) {
+	var playlist model.Playlist
 	var musics []*model.Music
 
 	files, err := os.ReadDir(f.path)
 	if err != nil {
 		f.logger.Error("failed to open files", logging.StringAttr("path", f.path), logging.ErrAttr(err))
 
-		return err
+		return model.Playlist{}, err
 	}
 
 	for _, file := range files {
@@ -62,5 +63,5 @@ func (f *files) GetPlaylistBy(name string, playlist *model.Playlist) error {
 
 	playlist.Musics = musics
 
-	return nil
+	return playlist, nil
 }

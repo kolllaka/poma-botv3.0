@@ -167,16 +167,32 @@ func onMessage(shard int, topic string, data []byte) {
 	reward := model.Reward{}
 	json.Unmarshal(data, &reward)
 
+	type rewardMessageData struct {
+		IsReward bool   `json:"is_reward,omitempty"`
+		Username string `json:"username,omitempty"`
+		Text     string `json:"text,omitempty"`
+	}
+
 	if reward.Type == "reward-redeemed" {
 		rewardName := reward.Data.Redemption.Reward.Title
-		username := reward.Data.Redemption.User.DisplayName
-		text := reward.Data.Redemption.UserInput
+
+		rewardMessageData := rewardMessageData{
+			IsReward: true,
+			Username: reward.Data.Redemption.User.DisplayName,
+			Text:     reward.Data.Redemption.UserInput,
+		}
+
+		data, err := json.Marshal(rewardMessageData)
+		if err != nil {
+			logger.Error("error on onMessage", logging.ErrAttr(err), logging.AnyAttr("data", rewardMessageData))
+
+			return
+		}
 
 		rmsg := model.RewardMessage{
-			IsReward: true,
-			Name:     rewardName,
-			Username: username,
-			Text:     text,
+			RouteName: rewardName,
+
+			Data: data,
 		}
 
 		twitchReader <- rmsg
