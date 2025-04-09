@@ -29,7 +29,7 @@ type RewardClass struct {
 	Cost                              int64               `json:"cost"`
 	IsUserInputRequired               bool                `json:"is_user_input_required"`
 	IsSubOnly                         bool                `json:"is_sub_only"`
-	Image                             interface{}         `json:"image"`
+	Image                             any                 `json:"image"`
 	DefaultImage                      DefaultImage        `json:"default_image"`
 	BackgroundColor                   string              `json:"background_color"`
 	IsEnabled                         bool                `json:"is_enabled"`
@@ -37,12 +37,12 @@ type RewardClass struct {
 	IsInStock                         bool                `json:"is_in_stock"`
 	MaxPerStream                      MaxPerStream        `json:"max_per_stream"`
 	ShouldRedemptionsSkipRequestQueue bool                `json:"should_redemptions_skip_request_queue"`
-	TemplateID                        interface{}         `json:"template_id"`
+	TemplateID                        any                 `json:"template_id"`
 	UpdatedForIndicatorAt             string              `json:"updated_for_indicator_at"`
 	MaxPerUserPerStream               MaxPerUserPerStream `json:"max_per_user_per_stream"`
 	GlobalCooldown                    GlobalCooldown      `json:"global_cooldown"`
-	RedemptionsRedeemedCurrentStream  interface{}         `json:"redemptions_redeemed_current_stream"`
-	CooldownExpiresAt                 interface{}         `json:"cooldown_expires_at"`
+	RedemptionsRedeemedCurrentStream  any                 `json:"redemptions_redeemed_current_stream"`
+	CooldownExpiresAt                 any                 `json:"cooldown_expires_at"`
 }
 
 type DefaultImage struct {

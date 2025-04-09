@@ -1,7 +1,9 @@
 package music
 
 import (
+	"bytes"
 	"encoding/json"
+	"fmt"
 
 	"github.com/kolllaka/poma-botv3.0/internal/model"
 	"github.com/kolllaka/poma-botv3.0/internal/services"
@@ -26,15 +28,20 @@ func NewRoute(services services.Service, rewardType string, rawConf json.RawMess
 
 // RunRoute implements Route.
 func (r *route) RunRoute(msg model.RewardMessage) (string, []byte, error) {
-	bSong := r.services.GetYoutubeMusicBy(msg)
-
-	var resp Resp
-
-	json.Unmarshal(bSong, &resp)
-
-	if resp.Data.Duration < 0 || r.conf.Duration > resp.Data.Duration {
-		return r.rewardType, bSong, nil
+	var music Music
+	if err := json.Unmarshal(msg.Data, &music); err != nil {
+		return r.rewardType, nil, fmt.Errorf("error on RunRoute: %w", err)
 	}
 
-	return r.rewardType, bSong, getErrorRequestToLong(resp.Data.Duration, r.conf.Duration)
+	bSong := r.services.GetYoutubeMusicBy(music.Text, true)
+	duration := bSong.Data.(model.Music).Duration
+
+	var network bytes.Buffer
+	json.NewEncoder(&network).Encode(bSong)
+
+	if duration < 0 || r.conf.Duration > duration {
+		return r.rewardType, network.Bytes(), nil
+	}
+
+	return r.rewardType, network.Bytes(), getErrorRequestToLong(duration, r.conf.Duration)
 }

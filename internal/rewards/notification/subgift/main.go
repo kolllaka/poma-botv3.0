@@ -1,4 +1,4 @@
-package aug
+package notification
 
 import (
 	"bytes"
@@ -13,9 +13,9 @@ import (
 )
 
 type route struct {
-	rewardType string
-	conf       conf
-	augFiles   []string
+	rewardType        string
+	conf              conf
+	notificationFiles []string
 }
 
 func NewRoute(rewardType string, rawConf json.RawMessage) *route {
@@ -27,30 +27,30 @@ func NewRoute(rewardType string, rawConf json.RawMessage) *route {
 		panic(err)
 	}
 
-	var augFiles []string
+	var notificationFiles []string
 
 	for _, file := range files {
-		augFiles = append(augFiles, file.Name())
+		notificationFiles = append(notificationFiles, file.Name())
 	}
 
 	return &route{
-		conf:       conf,
-		rewardType: rewardType,
-		augFiles:   augFiles,
+		conf:              conf,
+		rewardType:        rewardType,
+		notificationFiles: notificationFiles,
 	}
 }
 
 func (r *route) RunRoute(msg model.RewardMessage) (string, []byte, error) {
 	s1 := rand.NewSource(time.Now().UnixNano())
 	r1 := rand.New(s1)
-	num := r1.Intn(len(r.augFiles))
-	name := r.augFiles[num]
+	num := r1.Intn(len(r.notificationFiles))
+	name := r.notificationFiles[num]
 
-	var routeMsg RouteMessage
-	json.Unmarshal(msg.Data, &routeMsg)
+	var subGiftMsg subscribeGift
+	json.Unmarshal(msg.Data, &subGiftMsg)
 
 	rBody := Message{
-		Title: fmt.Sprintf(r.conf.Title, routeMsg.UserName),
+		Title: fmt.Sprintf(r.conf.Title, subGiftMsg.UserName, subGiftMsg.Total),
 		Link:  r.getLink(name),
 	}
 

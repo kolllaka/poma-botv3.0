@@ -1,9 +1,6 @@
 package services
 
 import (
-	"bytes"
-	"encoding/json"
-
 	"github.com/kolllaka/poma-botv3.0/internal/model"
 	"github.com/kolllaka/poma-botv3.0/internal/music"
 	"github.com/kolllaka/poma-botv3.0/internal/storage"
@@ -11,10 +8,10 @@ import (
 )
 
 type Service interface {
-	GetMyPlaylist() []byte
+	GetMyPlaylist(isReward bool) Responce
 
-	GetYoutubePlaylistBy(msg model.RewardMessage) []byte
-	GetYoutubeMusicBy(msg model.RewardMessage) []byte
+	GetYoutubePlaylistBy(textWithLink string, isReward bool) Responce
+	GetYoutubeMusicBy(textWithLink string, isReward bool) Responce
 
 	GetDuration(music *model.Music) error
 	StoreDuration(music *model.Music) error
@@ -43,11 +40,16 @@ func New(
 }
 
 // GetMyPlaylist implements Service.
-func (s *service) GetMyPlaylist() []byte {
+func (s *service) GetMyPlaylist(isReward bool) Responce {
 	playlist := model.Playlist{}
-	s.fmusic.GetPlaylistBy("", &playlist)
+	playlist, err := s.fmusic.GetPlaylistBy("")
+	if err != nil {
+		s.logger.Error("error from GetPlaylistBy", logging.ErrAttr(err))
 
-	var datas []Responce
+		return Responce{}
+	}
+
+	var datas []*model.Music
 
 	for _, song := range playlist.Musics {
 		if err := s.GetDuration(song); err != nil {
@@ -56,61 +58,56 @@ func (s *service) GetMyPlaylist() []byte {
 			continue
 		}
 
-		data := Responce{
-			Source:   FILE,
-			IsReward: false,
-			Data:     &song,
-		}
-
-		datas = append(datas, data)
+		datas = append(datas, song)
 	}
 
 	s.logger.Info("загруженно треков", logging.IntAttr("count", len(datas)))
 
-	var network bytes.Buffer
-	json.NewEncoder(&network).Encode(datas)
+	data := Responce{
+		Source:   FILE,
+		IsReward: isReward,
+		Data:     datas,
+	}
 
-	s.logger.Debug("json", logging.StringAttr("datas", network.String()))
+	s.logger.Debug("playlist", logging.AnyAttr("data", data))
 
-	return network.Bytes()
+	return data
 }
 
 // GetPlaylist implements Service.
-func (s *service) GetYoutubePlaylistBy(msg model.RewardMessage) []byte {
-	playlist := model.Playlist{
-		Author: msg.Reward.Username,
+func (s *service) GetYoutubePlaylistBy(textWithLink string, isReward bool) Responce {
+	playlist, err := s.ymusic.GetPlaylistBy(textWithLink)
+	if err != nil {
+		s.logger.Error("error from GetPlaylistBy", logging.ErrAttr(err))
+
+		return Responce{}
 	}
-	s.ymusic.GetPlaylistBy(msg.Reward.Text, &playlist)
 
 	data := Responce{
 		Source:   YOUTUBE,
-		IsReward: msg.Reward.IsReward,
+		IsReward: isReward,
 		Data:     playlist,
 	}
 
-	var network bytes.Buffer
-	json.NewEncoder(&network).Encode(data)
-
-	return network.Bytes()
+	return data
 }
 
 // GetMusic implements Service.
-func (s *service) GetYoutubeMusicBy(msg model.RewardMessage) []byte {
-	music := model.Music{
-		Author: msg.Reward.Username,
+func (s *service) GetYoutubeMusicBy(textWithLink string, isReward bool) Responce {
+	music, err := s.ymusic.GetMusicBy(textWithLink)
+	if err != nil {
+		s.logger.Error("error from GetMusicBy", logging.ErrAttr(err))
+
+		return Responce{}
 	}
-	s.ymusic.GetMusicBy(msg.Reward.Text, &music)
 
 	data := Responce{
 		Source:   YOUTUBE,
-		IsReward: msg.Reward.IsReward,
+		IsReward: isReward,
 		Data:     music,
 	}
 
-	var network bytes.Buffer
-	json.NewEncoder(&network).Encode(data)
-
-	return network.Bytes()
+	return data
 }
 
 // GetDuration implements Service.

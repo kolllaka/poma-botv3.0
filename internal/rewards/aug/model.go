@@ -14,3 +14,7 @@ type Message struct {
 	Title string `json:"title"`
 	Link  string `json:"link"`
 }
+
+type RouteMessage struct {
+	UserName string
+}

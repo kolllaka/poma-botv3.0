@@ -5,8 +5,10 @@ type conf struct {
 	Duration int    `json:"duration"`
 }
 
-type Resp struct {
-	Data struct {
-		Duration int `json:"duration"`
-	} `json:"data"`
+type Music struct {
+	IsReward bool
+	Source   string
+
+	Author string
+	Text   string
 }

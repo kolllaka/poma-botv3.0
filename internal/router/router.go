@@ -1,6 +1,7 @@
 package router
 
 import (
+	"bytes"
 	"encoding/json"
 	"html/template"
 	"net/http"
@@ -124,9 +125,12 @@ func (s *server) augws(w http.ResponseWriter, r *http.Request) {
 
 // music
 func (s *server) music(w http.ResponseWriter, r *http.Request) {
-	musics := s.services.GetMyPlaylist()
+	musics := s.services.GetMyPlaylist(false)
 
-	tmpl.ExecuteTemplate(w, MUSIC+".html", string(musics))
+	var network bytes.Buffer
+	json.NewEncoder(&network).Encode(musics)
+
+	tmpl.ExecuteTemplate(w, MUSIC+".html", network.String())
 }
 func (s *server) musicws(w http.ResponseWriter, r *http.Request) {
 	conn, _ := upgrader.Upgrade(w, r, nil)

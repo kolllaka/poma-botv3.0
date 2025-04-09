@@ -1,5 +1,7 @@
 package model
 
+import "encoding/json"
+
 const (
 	AUGURY       = "augury"
 	MUSIC        = "music"
@@ -9,12 +11,7 @@ const (
 )
 
 type RewardMessage struct {
-	Reward struct {
-		IsReward bool
-		Name     string
-		Username string
-		Text     string
-	}
-	Event struct {
-	}
+	RouteName string
+
+	Data json.RawMessage
 }
