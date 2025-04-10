@@ -12,6 +12,7 @@ export const Status = Object.freeze({
 
 export class Controller {
 	constructor() {
+		this.song = {}
 		this.whoPlay = Player.YOUTUBE
 		this.status = Status.PAUSE
 	}
@@ -22,6 +23,14 @@ export class Controller {
 
 	changeStatus(status) {
 		this.status = status
+	}
+
+	setCurrentSong(song) {
+		this.song = song
+	}
+
+	getCurrentSong() {
+		return this.song
 	}
 
 }

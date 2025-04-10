@@ -148,10 +148,7 @@ newcpController.onSkipHandler = function () {
 	console.log("send to socket", song);
 
 	if (song) {
-		sendSocket({
-			data: song,
-			reason: "skip"
-		})
+		sendSocket(mapping.songToSongServer("skip", song))
 	}
 
 	nextSong()
@@ -209,7 +206,7 @@ myPlayer.onEndedHandler = function (e) {
 const rewardPlayer = new RewardPlayer("rewardplayer", {
 	onReady: onPlayerReady,
 	onStateChange: onPlayerStateChange,
-	// onError: onError,
+	onError: onError,
 })
 function onPlayerReady() {
 	rewardPlayer.loadVideoById("QxtKHo0iMa4")
@@ -228,6 +225,10 @@ function onPlayerStateChange(event) {
 	}
 
 }
+function onError(event) {
+	sendSocket(mapping.songToSongServer("error", pControl.getCurrentSong(), event.data))
+	nextSong()
+}
 
 // players controller
 const pControl = new pc.Controller()
@@ -245,6 +246,7 @@ function nextSong() {
 			name: getLinkTemplate(ysong)
 		})
 		newcpController.getBtnPlay().dataset.btn = cpUi.BTN_TEXT_PAUSE
+		pControl.setCurrentSong(ysong)
 
 		return
 	}
@@ -260,6 +262,7 @@ function nextSong() {
 			name: song.name
 		})
 		newcpController.getBtnPlay().dataset.btn = cpUi.BTN_TEXT_PAUSE
+		pControl.setCurrentSong(song)
 
 		return
 	}
@@ -269,6 +272,7 @@ function nextSong() {
 	pControl.changePlayer(pc.Player.NOTHING)
 	newcpController.updateInfo(cpData.DEFAULT_SONG_INFO)
 	newcpController.getBtnPlay().dataset.btn = cpUi.BTN_TEXT_PLAY
+	pControl.setCurrentSong({})
 
 	return
 }

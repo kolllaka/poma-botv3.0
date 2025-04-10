@@ -36,9 +36,10 @@ export function playlistServerToSongArray(playlistData = {
 
 }
 
-export function songToSongServer(reason, data) {
+export function songToSongServer(reason, data, error) {
 	return {
 		reason: reason,
-		data: data
+		data: data,
+		error: error
 	}
 }
