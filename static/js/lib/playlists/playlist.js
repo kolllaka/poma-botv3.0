@@ -1,18 +1,22 @@
 import { shuffle } from '/static/js/lib/misc.js';
 
 export class Playlist {
-	constructor(datas = [], mapping) {
-		this.mapping = mapping
-
-		this.datas = datas.map(this.mapping)
+	constructor(datas = []) {
+		this.datas = datas
 		this.info = this.#calcInfo()
 	}
 
-	mapping(data = {}) {
-		return {
-			...data,
-			duration: data.duration
+	addSong(song) {
+		this.datas.push(song)
+		this.info = {
+			count: this.info.count + 1,
+			duration: this.info.duration + song.duration
 		}
+
+		console.log("push", song);
+
+
+		return song
 	}
 
 	#calcInfo() {
@@ -41,18 +45,6 @@ export class Playlist {
 
 	getInfo() {
 		return this.info
-	}
-
-	addSong(dataSong) {
-		const song = this.mapping(dataSong)
-
-		this.datas.push(song)
-		this.info = {
-			count: this.info.count + 1,
-			duration: this.info.duration + song.duration
-		}
-
-		return song
 	}
 
 	deleteSong(index) {

@@ -6,9 +6,8 @@ type conf struct {
 }
 
 type Music struct {
-	IsReward bool
-	Source   string
+	IsReward bool `json:"is_reward"`
 
-	Author string
-	Text   string
+	Author string `json:"username"`
+	Text   string `json:"text"`
 }

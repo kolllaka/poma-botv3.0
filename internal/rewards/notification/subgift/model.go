@@ -1,4 +1,4 @@
-package notification
+package subgift
 
 type conf struct {
 	fields `json:"fields"`

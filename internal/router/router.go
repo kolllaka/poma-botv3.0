@@ -125,10 +125,15 @@ func (s *server) augws(w http.ResponseWriter, r *http.Request) {
 
 // music
 func (s *server) music(w http.ResponseWriter, r *http.Request) {
-	musics := s.services.GetMyPlaylist(false)
+	playlist, err := s.services.GetMyPlaylist(false)
+	if err != nil {
+		s.logger.Error("error on GetMyPlaylist", logging.AnyAttr("playlist", playlist), logging.ErrAttr(err))
+	}
+
+	s.logger.Debug("get playlist", logging.AnyAttr("playlist", playlist))
 
 	var network bytes.Buffer
-	json.NewEncoder(&network).Encode(musics)
+	json.NewEncoder(&network).Encode(playlist)
 
 	tmpl.ExecuteTemplate(w, MUSIC+".html", network.String())
 }
@@ -155,25 +160,25 @@ func (s *server) musicws(w http.ResponseWriter, r *http.Request) {
 
 			switch data.Reason {
 			case "addDuration":
-				var song MusicFromSocket
-				if err := json.Unmarshal(data.Data, &song); err != nil {
+				var dataMusic SongFromSocket
+				if err := json.Unmarshal(data.Data, &dataMusic); err != nil {
 					s.logger.Error("Unmarshal error", logging.AnyAttr("data", data), logging.ErrAttr(err))
 
 					continue
 				}
 
-				s.logger.Debug("get data", logging.AnyAttr("song", song))
+				s.logger.Debug("get data", logging.AnyAttr("song", dataMusic))
 
 				if err := s.services.StoreDuration(&model.Music{
-					Link:     song.Data.Link,
-					Duration: song.Data.Duration,
+					Link:     dataMusic.Link,
+					Duration: dataMusic.Duration,
 				}); err != nil {
-					s.logger.Error("error from StoreDuration", logging.AnyAttr("song", song), logging.ErrAttr(err))
+					s.logger.Error("error from StoreDuration", logging.AnyAttr("song", dataMusic), logging.ErrAttr(err))
 
 					continue
 				}
 
-				s.logger.Debug("store duration", logging.AnyAttr("song", song))
+				s.logger.Debug("store duration", logging.AnyAttr("song", dataMusic))
 			}
 
 			go s.handleMessage(message)

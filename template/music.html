@@ -10,7 +10,10 @@
 	<link rel="stylesheet" href="./static/css/music.css">
 	<title>music queue</title>
 	<script>
-		let myPlaylist = JSON.parse('{{ . }}') || []
+		let myPlaylist = JSON.parse('{{ . }}')
+		if (!myPlaylist.data) {
+			myPlaylist.data = []
+		}
 		// console.log(data);
 	</script>
 </head>

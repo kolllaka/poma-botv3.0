@@ -9,10 +9,8 @@ type MsgFromSocket struct {
 	Data   json.RawMessage `json:"data,omitempty"`
 }
 
-type MusicFromSocket struct {
-	Data struct {
-		Title    string `json:"title,omitempty"`
-		Link     string `json:"link,omitempty"`
-		Duration int    `json:"duration,omitempty"`
-	} `json:"data"`
+type SongFromSocket struct {
+	Title    string `json:"title,omitempty"`
+	Link     string `json:"link,omitempty"`
+	Duration int    `json:"duration,omitempty"`
 }

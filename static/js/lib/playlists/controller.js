@@ -1,5 +1,3 @@
-
-
 export class Controller {
 	constructor(selector, ui, data) {
 
@@ -37,8 +35,8 @@ export class Controller {
 		this.controller.ui.updatePlaylist(datas)
 	}
 
-	addSong(data) {
-		const song = this.controller.data.addSong(data)
+	addSong(songData) {
+		const song = this.controller.data.addSong(songData)
 		const info = this.controller.data.getInfo()
 
 		this.controller.ui.addSong(song)

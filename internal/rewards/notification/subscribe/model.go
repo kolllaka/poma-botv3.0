@@ -1,4 +1,4 @@
-package notification
+package subscribe
 
 type conf struct {
 	fields `json:"fields"`

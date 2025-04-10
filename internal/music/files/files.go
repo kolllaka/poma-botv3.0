@@ -63,5 +63,7 @@ func (f *files) GetPlaylistBy(name string) (model.Playlist, error) {
 
 	playlist.Musics = musics
 
+	f.logger.Debug("load playlist", logging.AnyAttr("musics", musics))
+
 	return playlist, nil
 }

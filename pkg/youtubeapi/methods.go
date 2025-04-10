@@ -1,6 +1,7 @@
 package youtubeapi
 
 import (
+	"fmt"
 	"net/url"
 )
 
@@ -17,12 +18,12 @@ func (yc *yClient) ReqSongInfoById(songId string) (SongResp, error) {
 
 	body, err := yc.doRequest(getVideosMethod, q, nil)
 	if err != nil {
-		return SongResp{}, err
+		return SongResp{}, fmt.Errorf("error on doRequest:%w", err)
 	}
 
 	var resp SongResp
 	if err := parseResponseBody(body, &resp); err != nil {
-		return SongResp{}, err
+		return SongResp{}, fmt.Errorf("error on parseResponseBody:%w", err)
 	}
 
 	return resp, nil

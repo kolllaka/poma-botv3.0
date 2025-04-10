@@ -8,5 +8,5 @@ const (
 type Responce struct {
 	Source   int  `json:"source"`
 	IsReward bool `json:"is_reward"`
-	Data     any  `json:"data"`
+	Data     any  `json:"data,omitempty"`
 }

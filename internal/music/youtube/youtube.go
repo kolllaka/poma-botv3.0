@@ -1,8 +1,6 @@
 package youtube
 
 import (
-	"fmt"
-
 	"github.com/kolllaka/poma-botv3.0/internal/model"
 	"github.com/kolllaka/poma-botv3.0/pkg/logging"
 	"github.com/kolllaka/poma-botv3.0/pkg/youtubeapi"
@@ -27,9 +25,9 @@ func New(
 func (y *youtube) GetMusicBy(text string) (model.Music, error) {
 	songId, err := parseSongIdByText(text)
 	if err != nil {
-		y.logger.Warn("error parseSongIdByText", logging.StringAttr("text", text), logging.ErrAttr(err))
+		y.logger.Warn("bad user input", logging.StringAttr("text", text), logging.ErrAttr(err))
 
-		return model.Music{}, err
+		return model.Music{}, model.ErrBadLink
 	}
 
 	song, err := y.youtubeapi.ReqSongInfoById(songId)
@@ -42,7 +40,7 @@ func (y *youtube) GetMusicBy(text string) (model.Music, error) {
 	if len(song.Items) < 1 {
 		y.logger.Warn("song not found", logging.StringAttr("songId", songId))
 
-		return model.Music{}, fmt.Errorf("song not found")
+		return model.Music{}, nil
 	}
 
 	var music model.Music

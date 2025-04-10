@@ -3,6 +3,7 @@ package music
 import (
 	"bytes"
 	"encoding/json"
+	"errors"
 	"fmt"
 
 	"github.com/kolllaka/poma-botv3.0/internal/model"
@@ -33,7 +34,17 @@ func (r *route) RunRoute(msg model.RewardMessage) (string, []byte, error) {
 		return r.rewardType, nil, fmt.Errorf("error on RunRoute: %w", err)
 	}
 
-	bSong := r.services.GetYoutubeMusicBy(music.Text, true)
+	bSong, err := r.services.GetYoutubeMusicBy(model.Music{
+		Link:   music.Text,
+		Author: music.Author,
+	}, music.IsReward)
+	if err != nil {
+		if errors.Is(err, model.ErrBadLink) {
+			return r.rewardType, nil, err
+		}
+
+		return r.rewardType, nil, fmt.Errorf("error on GetYoutubeMusicBy: %w", err)
+	}
 	duration := bSong.Data.(model.Music).Duration
 
 	var network bytes.Buffer

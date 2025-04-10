@@ -1,4 +1,4 @@
-export class GetDuration {
+export class GetMetaData {
 	constructor() {
 		this.audio = new Audio()
 		this.checkArray = []
@@ -21,7 +21,9 @@ export class GetDuration {
 	}
 
 	setSrc(data) {
-		this.audio.src = encodeURI(data.data.link)
+		if (data) {
+			this.audio.src = encodeURI(data.link)
+		}
 	}
 
 	start() {

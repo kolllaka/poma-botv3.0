@@ -5,6 +5,9 @@ export class Player {
 		},
 		onStateChange: () => {
 			console.log('not onPlayerStateChange implement');
+		},
+		onError: () => {
+			console.log('not onError implement');
 		}
 	}) {
 		this.player = this.#init(selector, events)

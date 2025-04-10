@@ -8,10 +8,10 @@ import (
 )
 
 type Service interface {
-	GetMyPlaylist(isReward bool) Responce
+	GetMyPlaylist(isReward bool) (Responce, error)
 
-	GetYoutubePlaylistBy(textWithLink string, isReward bool) Responce
-	GetYoutubeMusicBy(textWithLink string, isReward bool) Responce
+	GetYoutubePlaylistBy(playlist model.Playlist, isReward bool) (Responce, error)
+	GetYoutubeMusicBy(music model.Music, isReward bool) (Responce, error)
 
 	GetDuration(music *model.Music) error
 	StoreDuration(music *model.Music) error
@@ -40,13 +40,13 @@ func New(
 }
 
 // GetMyPlaylist implements Service.
-func (s *service) GetMyPlaylist(isReward bool) Responce {
+func (s *service) GetMyPlaylist(isReward bool) (Responce, error) {
 	playlist := model.Playlist{}
 	playlist, err := s.fmusic.GetPlaylistBy("")
 	if err != nil {
 		s.logger.Error("error from GetPlaylistBy", logging.ErrAttr(err))
 
-		return Responce{}
+		return Responce{}, err
 	}
 
 	var datas []*model.Music
@@ -54,8 +54,6 @@ func (s *service) GetMyPlaylist(isReward bool) Responce {
 	for _, song := range playlist.Musics {
 		if err := s.GetDuration(song); err != nil {
 			s.logger.Warn("error GetDuration", logging.AnyAttr("song", &song), logging.ErrAttr(err))
-
-			continue
 		}
 
 		datas = append(datas, song)
@@ -71,49 +69,49 @@ func (s *service) GetMyPlaylist(isReward bool) Responce {
 
 	s.logger.Debug("playlist", logging.AnyAttr("data", data))
 
-	return data
+	return data, nil
 }
 
 // GetPlaylist implements Service.
-func (s *service) GetYoutubePlaylistBy(textWithLink string, isReward bool) Responce {
-	playlist, err := s.ymusic.GetPlaylistBy(textWithLink)
+func (s *service) GetYoutubePlaylistBy(playlist model.Playlist, isReward bool) (Responce, error) {
+	filledPlaylist, err := s.ymusic.GetPlaylistBy(playlist.Link)
 	if err != nil {
 		s.logger.Error("error from GetPlaylistBy", logging.ErrAttr(err))
 
-		return Responce{}
+		return Responce{}, err
 	}
+	filledPlaylist.Author = playlist.Author
 
 	data := Responce{
 		Source:   YOUTUBE,
 		IsReward: isReward,
-		Data:     playlist,
+		Data:     filledPlaylist,
 	}
 
-	return data
+	return data, nil
 }
 
 // GetMusic implements Service.
-func (s *service) GetYoutubeMusicBy(textWithLink string, isReward bool) Responce {
-	music, err := s.ymusic.GetMusicBy(textWithLink)
+func (s *service) GetYoutubeMusicBy(music model.Music, isReward bool) (Responce, error) {
+	filledMusic, err := s.ymusic.GetMusicBy(music.Link)
 	if err != nil {
-		s.logger.Error("error from GetMusicBy", logging.ErrAttr(err))
-
-		return Responce{}
+		return Responce{}, err
 	}
+	filledMusic.Author = music.Author
 
 	data := Responce{
 		Source:   YOUTUBE,
 		IsReward: isReward,
-		Data:     music,
+		Data:     filledMusic,
 	}
 
-	return data
+	return data, nil
 }
 
 // GetDuration implements Service.
 func (s *service) GetDuration(music *model.Music) error {
 	storeDuration := storage.StoreDuration{
-		Link: music.Link,
+		Link: music.Name,
 	}
 
 	if err := s.storage.GetDuration(&storeDuration); err != nil {

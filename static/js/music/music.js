@@ -1,24 +1,19 @@
 // ws
 import { ConnectWS } from '../lib/ws.js';
 // check duration
-import { GetDuration } from '../lib/get_duration.js';
+import { GetMetaData } from '../lib/get_meta_data.js';
 // default settings
 import * as settings from './settings.js';
-// playlists
-import { Controller } from './playlists/controller.js';
-import { PlaylistUI } from './playlists/ui.js';
 // my Playlist
-import * as myUi from './playlists/my_playlist/ui.js';
-import * as myData from './playlists/my_playlist/data.js';
+import { myPlaylistController } from './my_playlist/controller.js'
 // reward Playlist
-import * as rewardUi from './playlists/reward_playlist/ui.js';
-import * as rewardData from './playlists/reward_playlist/data.js';
+import { rewardPlaylistController } from './reward_playlist/controller.js'
 // misc
 import { getLinkTemplate } from '../lib/misc.js';
 // control panel
-import * as cpUi from './control_panel/ui.js';
-import * as cpData from './control_panel/data.js';
-import { Controller as CpController } from './control_panel/controller.js';
+import * as cpUi from '../lib/control_panel/ui.js';
+import * as cpData from '../lib/control_panel/data.js';
+import { Controller as CpController } from '../lib/control_panel/controller.js';
 // my player
 import { Player as MyPlayer } from './players/my_player/player.js';
 // youtube player
@@ -26,9 +21,48 @@ import { Player as RewardPlayer } from './players/reward_player/player.js';
 // players control
 import * as pc from './players/controller.js';
 
+// data mapping
+import * as mapping from './mapping_data.js';
 
 
+console.log(myPlaylist);
 
+// ?check meta of song
+const getDuration = new GetMetaData()
+
+// console.log("myPlaylist", myPlaylistData);
+// myPlaylistData = myPlaylistData.data
+
+
+mapping.playlistServerToSongArray(myPlaylist).forEach((song) => {
+	console.log(song);
+
+	if (song.duration <= 0) {
+		getDuration.addSong(song)
+
+		return
+	}
+
+	myPlaylistController.addSong(song)
+})
+getDuration.onloadedmetadata = function () {
+	const duration = Math.floor(getDuration.audio.duration)
+
+	getDuration.audio.pause()
+	getDuration.currentData.duration = duration
+
+
+	console.log("send to socket", getDuration.currentData);
+
+	sendSocket(mapping.songToSongServer("addDuration", getDuration.currentData))
+
+	const data = getDuration.checkArray.pop()
+
+	if (data) {
+		getDuration.currentData = data
+		getDuration.setSrc(getDuration.currentData)
+	}
+}
 
 
 // init websocket
@@ -68,65 +102,26 @@ const sendSocket = (data) => {
 }
 
 function proccessDataFromWS(data) {
+	const song = mapping.songServerToSong(data)
+
 	if (data.is_reward) {
 		//! put on reward playlist
-
-		rewardPlaylistController.addSong(data)
+		rewardPlaylistController.addSong(song)
 
 		return
 	}
 
 	//! put on my playlist
-	myPlaylistController.addSong(data)
+	myPlaylistController.addSong(song)
 
 }
 
-// ?check meta of song
-const getDuration = new GetDuration()
 
-
-myPlaylist.forEach((data) => {
-	getDuration.addSong(data)
-})
-getDuration.onloadedmetadata = function () {
-	const duration = Math.floor(getDuration.audio.duration)
-
-	getDuration.audio.pause()
-	getDuration.currentData.data.duration = duration
-
-
-	console.log("send to socket", getDuration.currentData);
-
-	sendSocket({ data: getDuration.currentData, reason: "addDuration" })
-
-	const data = getDuration.checkArray.pop()
-
-	if (data) {
-		getDuration.currentData = data
-		getDuration.setSrc(getDuration.currentData)
-	}
-}
 
 
 // load settings
 const defaultsettings = settings.load()
 
-// my Playlist
-const myPlaylistUi = new PlaylistUI("myPlaylist", {
-	song: myUi.getTemplateSong,
-	info: myUi.getTemplateInfo
-})
-
-const myDatas = myData.data(myPlaylist)
-const myPlaylistController = new Controller("myPlaylist", myPlaylistUi, myDatas)
-
-// reward Playlist
-const rewardPlaylistUi = new PlaylistUI("rewardPlaylist", {
-	song: rewardUi.getTemplateSong,
-	info: rewardUi.getTemplateInfo
-})
-const rewardDatas = rewardData.data([])
-const rewardPlaylistController = new Controller("rewardPlaylist", rewardPlaylistUi, rewardDatas)
 myPlaylistController.onDeleteHandler = function (target) {
 	const index = parseInt(target.dataset.index)
 
@@ -213,7 +208,8 @@ myPlayer.onEndedHandler = function (e) {
 // reward playlist player
 const rewardPlayer = new RewardPlayer("rewardplayer", {
 	onReady: onPlayerReady,
-	onStateChange: onPlayerStateChange
+	onStateChange: onPlayerStateChange,
+	// onError: onError,
 })
 function onPlayerReady() {
 	rewardPlayer.loadVideoById("QxtKHo0iMa4")

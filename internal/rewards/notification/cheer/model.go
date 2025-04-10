@@ -1,4 +1,4 @@
-package notification
+package cheer
 
 type conf struct {
 	fields `json:"fields"`
