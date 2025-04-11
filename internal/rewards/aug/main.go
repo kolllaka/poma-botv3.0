@@ -15,10 +15,11 @@ import (
 type route struct {
 	rewardType string
 	conf       conf
+	url        string
 	augFiles   []string
 }
 
-func NewRoute(rewardType string, rawConf json.RawMessage) *route {
+func NewRoute(rewardType string, rawConf json.RawMessage, newUrl string) *route {
 	var conf conf
 	json.Unmarshal(rawConf, &conf)
 
@@ -36,6 +37,7 @@ func NewRoute(rewardType string, rawConf json.RawMessage) *route {
 	return &route{
 		conf:       conf,
 		rewardType: rewardType,
+		url:        newUrl,
 		augFiles:   augFiles,
 	}
 }
@@ -49,7 +51,7 @@ func (r *route) RunRoute(msg model.RewardMessage) (string, []byte, error) {
 	var routeMsg RouteMessage
 	json.Unmarshal(msg.Data, &routeMsg)
 
-	rBody := Message{
+	rBody := message{
 		Title: fmt.Sprintf(r.conf.Title, routeMsg.UserName),
 		Link:  r.getLink(name),
 	}
@@ -61,5 +63,5 @@ func (r *route) RunRoute(msg model.RewardMessage) (string, []byte, error) {
 }
 
 func (r *route) getLink(name string) string {
-	return filepath.Join(r.conf.Url, name)
+	return filepath.Join(r.url, name)
 }

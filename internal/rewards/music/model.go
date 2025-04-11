@@ -5,7 +5,7 @@ type conf struct {
 	Duration int    `json:"duration"`
 }
 
-type Music struct {
+type music struct {
 	IsReward bool `json:"is_reward"`
 
 	Author string `json:"username"`

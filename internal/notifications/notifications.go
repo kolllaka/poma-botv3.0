@@ -1,4 +1,4 @@
-package rewards
+package notifications
 
 import (
 	"encoding/json"
@@ -6,15 +6,14 @@ import (
 	"strings"
 
 	"github.com/kolllaka/poma-botv3.0/internal/model"
-	"github.com/kolllaka/poma-botv3.0/internal/rewards/aug"
-	"github.com/kolllaka/poma-botv3.0/internal/rewards/music"
+	"github.com/kolllaka/poma-botv3.0/internal/notifications/subscribe"
 	"github.com/kolllaka/poma-botv3.0/internal/services"
 	"github.com/kolllaka/poma-botv3.0/pkg/logging"
 )
 
 type Rewards interface {
 	HandleReward()
-	InitRewards(cfg *model.RewardsConfig)
+	InitRewards(cfg *model.NotificationsConfig)
 
 	GetRewardChannel(rewardType string) chan []byte
 	GetPathToUrl() []string
@@ -24,7 +23,7 @@ type rewards struct {
 	services services.Service
 
 	routes map[string]Route
-	reader chan model.RewardMessage
+	reader chan model.NotificationMessage
 
 	WritersChan map[string]chan []byte
 
@@ -34,7 +33,7 @@ type rewards struct {
 func New(
 	logger *logging.Logger,
 	services services.Service,
-	reader chan model.RewardMessage,
+	reader chan model.NotificationMessage,
 ) Rewards {
 	return &rewards{
 		logger:      logger,
@@ -47,27 +46,27 @@ func New(
 }
 
 func (r *rewards) HandleReward() {
-	go func(reader chan model.RewardMessage) {
+	go func(reader chan model.NotificationMessage) {
 		for {
-			reward := <-reader
+			notification := <-reader
 
-			rewardName := strings.ToLower(reward.RouteName)
+			notificationsType := strings.ToLower(notification.RouteType)
 
-			r.logger.Debug("reward received", logging.AnyAttr("reward", reward))
+			r.logger.Debug("notification received", logging.AnyAttr("notification", notification))
 
-			route, ok := r.routes[rewardName]
+			route, ok := r.routes[notificationsType]
 			if !ok {
-				r.logger.Warn("unknown reward route", logging.AnyAttr("reward", reward))
+				r.logger.Warn("unknown notification route", logging.AnyAttr("notification", notification))
 
 				continue
 			}
 
 			go func() {
-				rType, rBody, err := route.RunRoute(reward)
+				nType, rBody, err := route.RunRoute(notification)
 				if err != nil {
 					r.logger.Warn(
 						"RunRoute",
-						logging.StringAttr("reward type", rType),
+						logging.StringAttr("notification type", nType),
 						logging.AnyAttr("body", string(rBody)),
 						logging.ErrAttr(err),
 					)
@@ -75,30 +74,28 @@ func (r *rewards) HandleReward() {
 					return
 				}
 
-				r.WritersChan[rType] <- rBody
+				r.WritersChan[nType] <- rBody
 			}()
 		}
 	}(r.reader)
 }
 
-func (r *rewards) InitRewards(cfg *model.RewardsConfig) {
-	for _, reward := range cfg.Rewards {
-		rewardName := strings.ToLower(reward.Name)
+func (r *rewards) InitRewards(cfg *model.NotificationsConfig) {
+	for _, notification := range cfg.Notifications {
+		notificationType := strings.ToLower(notification.Type)
 
-		switch reward.Type {
-		case model.REWARD_AUGURY:
-			newUrl := r.appendPathToUrl(reward.Fields)
-			r.routes[rewardName] = aug.NewRoute(model.REWARD_AUGURY, reward.Fields, newUrl)
-		case model.REWARD_MUSIC:
-			r.routes[rewardName] = music.NewRoute(model.REWARD_MUSIC, r.services, reward.Fields)
+		switch notificationType {
+		case model.NOTIFICATION_SUBSCRIBE:
+			r.routes[notificationType] = subscribe.NewRoute(notificationType, notification.Checks)
+
 		default:
-			r.logger.Warn("unknown reward type", logging.AnyAttr("reward", reward))
+			r.logger.Warn("unknown notification type", logging.AnyAttr("notification", notification))
 
 			continue
 		}
 
-		if _, ok := r.WritersChan[reward.Type]; !ok {
-			r.WritersChan[reward.Type] = make(chan []byte)
+		if _, ok := r.WritersChan[notification.Type]; !ok {
+			r.WritersChan[notification.Type] = make(chan []byte)
 		}
 	}
 
@@ -114,14 +111,14 @@ func (r *rewards) GetPathToUrl() []string {
 	return r.pathToUrl
 }
 
-func (r *rewards) appendPathToUrl(fields json.RawMessage) string {
-	type field struct {
+func (r *rewards) appendPathToUrl(checks json.RawMessage) string {
+	type path struct {
 		Path string `json:"path"`
 	}
-	f := field{}
-	json.Unmarshal(fields, &f)
+	f := path{}
+	json.Unmarshal(checks, &f)
 
 	r.pathToUrl = append(r.pathToUrl, f.Path)
 
-	return fmt.Sprintf("/%s%d/", model.REWARD_NAME, len(r.pathToUrl)-1)
+	return fmt.Sprintf("/%s%d/", model.NOTIFICATION_NAME, len(r.pathToUrl)-1)
 }

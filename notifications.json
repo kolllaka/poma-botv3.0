@@ -1,0 +1,29 @@
+{
+	"notification": [
+		{
+			"type": "subscribe",
+			"checks": [
+				{
+					"condition": {
+						"tier": 1,
+						"is_gift": true
+					},
+					"fields": {
+						"title": "",
+						"path": ""
+					}
+				},
+				{
+					"condition": {
+						"tier": 1,
+						"is_gift": true
+					},
+					"fields": {
+						"title": "",
+						"path": ""
+					}
+				}
+			]
+		}
+	]
+}

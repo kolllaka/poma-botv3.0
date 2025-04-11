@@ -16,7 +16,7 @@ type route struct {
 	conf       conf
 }
 
-func NewRoute(services services.Service, rewardType string, rawConf json.RawMessage) *route {
+func NewRoute(rewardType string, services services.Service, rawConf json.RawMessage) *route {
 	var conf conf
 	json.Unmarshal(rawConf, &conf)
 
@@ -29,7 +29,7 @@ func NewRoute(services services.Service, rewardType string, rawConf json.RawMess
 
 // RunRoute implements Route.
 func (r *route) RunRoute(msg model.RewardMessage) (string, []byte, error) {
-	var music Music
+	var music music
 	if err := json.Unmarshal(msg.Data, &music); err != nil {
 		return r.rewardType, nil, fmt.Errorf("error on RunRoute: %w", err)
 	}

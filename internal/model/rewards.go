@@ -3,9 +3,8 @@ package model
 import "encoding/json"
 
 const (
-	AUGURY       = "augury"
-	MUSIC        = "music"
-	NOTIFICATION = "notification"
+	REWARD_AUGURY = "augury"
+	REWARD_MUSIC  = "music"
 
 	REWARD_NAME = "reward"
 )

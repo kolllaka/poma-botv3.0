@@ -115,7 +115,7 @@ func (s *server) augws(w http.ResponseWriter, r *http.Request) {
 	}()
 
 	for {
-		reward := <-s.rewards.GetRewardChannel(model.AUGURY)
+		reward := <-s.rewards.GetRewardChannel(model.REWARD_AUGURY)
 
 		s.writeByteMsg(AUG, reward)
 
@@ -206,7 +206,7 @@ func (s *server) musicws(w http.ResponseWriter, r *http.Request) {
 	// }()
 
 	for {
-		mBody := <-s.rewards.GetRewardChannel(model.MUSIC)
+		mBody := <-s.rewards.GetRewardChannel(model.REWARD_MUSIC)
 
 		s.writeByteMsg(MUSIC, mBody)
 	}

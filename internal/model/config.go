@@ -29,3 +29,16 @@ type RewardConfig struct {
 func NewRewardConfig() *RewardsConfig {
 	return &RewardsConfig{}
 }
+
+type NotificationsConfig struct {
+	Notifications []Notification `json:"notifications"`
+}
+
+type Notification struct {
+	Type   string          `json:"type"`
+	Checks json.RawMessage `json:"checks"`
+}
+
+func NewNotificationConfig() *NotificationsConfig {
+	return &NotificationsConfig{}
+}

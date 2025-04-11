@@ -2,6 +2,7 @@ package subscribe
 
 type conf struct {
 	fields `json:"fields"`
+	checks `json:"checks"`
 	Url    string `json:"url"`
 }
 
@@ -10,7 +11,10 @@ type fields struct {
 	Path  string `json:"path"`
 }
 
-type Message struct {
+type checks struct {
+}
+
+type message struct {
 	Title string `json:"title"`
 	Link  string `json:"link"`
 }

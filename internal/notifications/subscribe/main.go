@@ -13,12 +13,12 @@ import (
 )
 
 type route struct {
-	rewardType        string
-	conf              conf
-	notificationFiles []string
+	notificationType string
+	conf             conf
+	Files            []string
 }
 
-func NewRoute(rewardType string, rawConf json.RawMessage) *route {
+func NewRoute(notificationType string, rawConf json.RawMessage) *route {
 	var conf conf
 	json.Unmarshal(rawConf, &conf)
 
@@ -34,22 +34,22 @@ func NewRoute(rewardType string, rawConf json.RawMessage) *route {
 	}
 
 	return &route{
-		conf:              conf,
-		rewardType:        rewardType,
-		notificationFiles: notificationFiles,
+		conf:             conf,
+		notificationType: notificationType,
+		Files:            notificationFiles,
 	}
 }
 
-func (r *route) RunRoute(msg model.RewardMessage) (string, []byte, error) {
+func (r *route) RunRoute(msg model.NotificationMessage) (string, []byte, error) {
 	s1 := rand.NewSource(time.Now().UnixNano())
 	r1 := rand.New(s1)
-	num := r1.Intn(len(r.notificationFiles))
-	name := r.notificationFiles[num]
+	num := r1.Intn(len(r.Files))
+	name := r.Files[num]
 
 	var subMsg subscribe
 	json.Unmarshal(msg.Data, &subMsg)
 
-	rBody := Message{
+	rBody := message{
 		Title: fmt.Sprintf(r.conf.Title, subMsg.UserName, subMsg.Tier),
 		Link:  r.getLink(name),
 	}
@@ -57,7 +57,7 @@ func (r *route) RunRoute(msg model.RewardMessage) (string, []byte, error) {
 	var network bytes.Buffer
 	json.NewEncoder(&network).Encode(rBody)
 
-	return r.rewardType, network.Bytes(), nil
+	return r.notificationType, network.Bytes(), nil
 }
 
 func (r *route) getLink(name string) string {
