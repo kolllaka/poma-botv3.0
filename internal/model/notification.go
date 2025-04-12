@@ -5,6 +5,7 @@ import "encoding/json"
 const (
 	NOTIFICATION_SUBSCRIBE = "subscribe"
 	NOTIFICATION_RAID      = "raid"
+	NOTIFICATION_FOLLOW    = "follow"
 
 	NOTIFICATION_NAME = "notification"
 )

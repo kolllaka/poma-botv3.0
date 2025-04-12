@@ -80,6 +80,9 @@ func (s *server) Start() *http.ServeMux {
 	router.HandleFunc("/"+model.NOTIFICATION_SUBSCRIBE, s.subscribe)
 	router.HandleFunc("/"+model.NOTIFICATION_SUBSCRIBE+"/ws", s.subscribews)
 
+	router.HandleFunc("/"+model.NOTIFICATION_FOLLOW, s.follow)
+	router.HandleFunc("/"+model.NOTIFICATION_FOLLOW+"/ws", s.followws)
+
 	router.HandleFunc("/"+MUSIC, s.music)
 	router.HandleFunc("/"+MUSIC+"/ws", s.musicws)
 
@@ -198,6 +201,43 @@ func (s *server) subscribews(w http.ResponseWriter, r *http.Request) {
 		)
 
 		s.writeByteMsg(model.NOTIFICATION_SUBSCRIBE, notification)
+
+		time.Sleep(10 * time.Second)
+	}
+}
+
+// follow
+func (s *server) follow(w http.ResponseWriter, r *http.Request) {
+	tmpl.ExecuteTemplate(w, model.NOTIFICATION_FOLLOW+".html", nil)
+}
+func (s *server) followws(w http.ResponseWriter, r *http.Request) {
+	conn, _ := upgrader.Upgrade(w, r, nil)
+	defer conn.Close()
+	s.clients[model.NOTIFICATION_FOLLOW] = conn
+	defer delete(s.clients, model.NOTIFICATION_FOLLOW)
+
+	go func() {
+		for {
+			mt, message, err := conn.ReadMessage()
+
+			if err != nil || mt == websocket.CloseMessage {
+				s.logger.Warn("error from socket", logging.ErrAttr(err))
+
+				break // Выходим из цикла, если клиент пытается закрыть соединение или связь прервана
+			}
+
+			go s.handleMessage(message)
+		}
+	}()
+
+	for {
+		notification := <-s.notifications.GetNotificationChannel(model.NOTIFICATION_FOLLOW)
+
+		s.logger.Debug("recieve notification",
+			logging.AnyAttr("notification", notification),
+		)
+
+		s.writeByteMsg(model.NOTIFICATION_FOLLOW, notification)
 
 		time.Sleep(10 * time.Second)
 	}

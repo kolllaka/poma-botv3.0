@@ -47,6 +47,17 @@
 					}
 				}
 			]
+		},
+		{
+			"type": "follow",
+			"checks": [
+				{
+					"fields": {
+						"title": "${user} теперь котик",
+						"path": "./static/notifications/raid/3.mp4"
+					}
+				}
+			]
 		}
 	]
 }

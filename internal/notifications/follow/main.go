@@ -4,62 +4,67 @@ import (
 	"bytes"
 	"encoding/json"
 	"fmt"
-	"math/rand"
-	"os"
-	"path/filepath"
-	"time"
+	"strings"
 
 	"github.com/kolllaka/poma-botv3.0/internal/model"
+	m "github.com/kolllaka/poma-botv3.0/internal/notifications/_misc"
 )
 
-type route struct {
-	rewardType        string
-	conf              conf
-	notificationFiles []string
+type fillText func(msg follow) string
+
+var parcingMap map[string]fillText = map[string]fillText{
+	"user": func(msg follow) string {
+		return msg.UserName
+	},
 }
 
-func NewRoute(rewardType string, rawConf json.RawMessage) *route {
-	var conf conf
-	json.Unmarshal(rawConf, &conf)
+type route struct {
+	notificationType string
+	confs            []conf
+}
 
-	files, err := os.ReadDir(conf.Path)
-	if err != nil {
-		panic(err)
-	}
-
-	var notificationFiles []string
-
-	for _, file := range files {
-		notificationFiles = append(notificationFiles, file.Name())
-	}
+func NewRoute(notificationType string, rawConf json.RawMessage) *route {
+	var confs []conf
+	json.Unmarshal(rawConf, &confs)
 
 	return &route{
-		conf:              conf,
-		rewardType:        rewardType,
-		notificationFiles: notificationFiles,
+		confs:            confs,
+		notificationType: notificationType,
 	}
 }
 
-func (r *route) RunRoute(msg model.RewardMessage) (string, []byte, error) {
-	s1 := rand.NewSource(time.Now().UnixNano())
-	r1 := rand.New(s1)
-	num := r1.Intn(len(r.notificationFiles))
-	name := r.notificationFiles[num]
-
+func (r *route) RunRoute(msg model.NotificationMessage) (string, []byte, error) {
 	var followMsg follow
 	json.Unmarshal(msg.Data, &followMsg)
 
-	rBody := Message{
-		Title: fmt.Sprintf(r.conf.Title, followMsg.UserName),
-		Link:  r.getLink(name),
+	if len(r.confs) < 1 {
+		return r.notificationType, nil, model.ErrorEmptyFollowConf
+	}
+
+	title := r.confs[0].Title
+	words := m.GetArraySwitchingWordsFromTitle(title)
+
+	for _, word := range words {
+		newWord, ok := parcingMap[word]
+		if !ok {
+			continue
+		}
+
+		title = strings.Replace(title, fmt.Sprintf("${%s}", word), newWord(followMsg), 1)
+	}
+
+	link, err := m.GetRandomFileLinkFromIndex(r.confs[0].Path)
+	if err != nil {
+		return r.notificationType, nil, err
+	}
+
+	rBody := message{
+		Title: title,
+		Link:  link,
 	}
 
 	var network bytes.Buffer
 	json.NewEncoder(&network).Encode(rBody)
 
-	return r.rewardType, network.Bytes(), nil
-}
-
-func (r *route) getLink(name string) string {
-	return filepath.Join(r.conf.Url, name)
+	return r.notificationType, network.Bytes(), nil
 }

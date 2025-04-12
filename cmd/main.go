@@ -132,7 +132,9 @@ func main() {
 			isSwitch = !isSwitch
 			time.Sleep(15 * time.Second)
 			// notificationsReader <- getRaidMsg("kolliaka", 10)
-			notificationsReader <- getSubscribeMsg("kolliaka", 2000, isSwitch)
+			// notificationsReader <- getSubscribeMsg("kolliaka", 2000, isSwitch)
+			notificationsReader <- getFollowMsg("kolliaka")
+
 		}
 	}()
 
@@ -262,6 +264,22 @@ func getSubscribeMsg(name string, tier int, isGift bool) model.NotificationMessa
 
 	return model.NotificationMessage{
 		"subscribe",
+		network.Bytes(),
+	}
+}
+
+type followMsg struct {
+	UserName string `json:"user_name,omitempty"`
+}
+
+func getFollowMsg(name string) model.NotificationMessage {
+	var network bytes.Buffer
+	json.NewEncoder(&network).Encode(subscribeMsg{
+		UserName: name,
+	})
+
+	return model.NotificationMessage{
+		"follow",
 		network.Bytes(),
 	}
 }

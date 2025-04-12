@@ -1,0 +1,20 @@
+.notification {
+  display: flex;
+  display: none;
+}
+.notification__body {
+  padding: 10px;
+  margin: auto;
+}
+.notification__title {
+  font-size: 40px;
+  color: red;
+  text-align: center;
+}
+.notification__source {
+  display: flex;
+  justify-content: center;
+}
+.notification__source video {
+  background-size: cover;
+}
