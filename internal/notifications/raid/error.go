@@ -3,5 +3,6 @@ package raid
 import "errors"
 
 var (
-	ErrorEmptyDirectory = errors.New("empty directory")
+	ErrorEmptyDirectory = errors.New("error empty directory")
+	ErrorToLowViewers   = errors.New("error low count viewers")
 )

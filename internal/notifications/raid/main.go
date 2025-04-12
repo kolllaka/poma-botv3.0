@@ -42,7 +42,10 @@ func (r *route) RunRoute(msg model.NotificationMessage) (string, []byte, error) 
 	var raidMsg raid
 	json.Unmarshal(msg.Data, &raidMsg)
 
-	index := r.checks(raidMsg)
+	index, err := r.checks(raidMsg)
+	if err != nil {
+		return r.notificationType, nil, fmt.Errorf("%w: %d viewers", err, raidMsg.Viewers)
+	}
 
 	title := r.getTitleFromIndex(index, raidMsg)
 	link, err := r.getRandomFileLinkFromIndex(index)
@@ -63,6 +66,15 @@ func (r *route) RunRoute(msg model.NotificationMessage) (string, []byte, error) 
 
 func (r *route) getRandomFileLinkFromIndex(index int) (string, error) {
 	path := r.confs[index].Path
+
+	isFile, err := isFile(path)
+	if err != nil {
+		return "", err
+	}
+
+	if isFile {
+		return path, nil
+	}
 
 	files, err := os.ReadDir(path)
 	if err != nil {
@@ -120,12 +132,21 @@ func (r *route) getTitleFromIndex(index int, msg raid) string {
 	return title
 }
 
-func (r *route) checks(raidMsg raid) int {
+func (r *route) checks(raidMsg raid) (int, error) {
 	for i, conf := range r.confs {
-		if raidMsg.Viewers > conf.conditions.Viewers {
-			return i
+		if raidMsg.Viewers >= conf.conditions.Viewers {
+			return i, nil
 		}
 	}
 
-	return len(r.confs) - 1
+	return -1, ErrorToLowViewers
+}
+
+func isFile(path string) (bool, error) {
+	f, err := os.Stat(path)
+	if err != nil {
+		return false, err
+	}
+
+	return !f.IsDir(), nil
 }
