@@ -1,17 +1,18 @@
 package subscribe
 
 type conf struct {
-	fields `json:"fields"`
-	checks `json:"checks"`
-	Url    string `json:"url"`
+	conditions `json:"conditions"`
+	fields     `json:"fields"`
+}
+
+type conditions struct {
+	IsGift bool `json:"is_gift,omitempty"`
+	Tier   int  `json:"tier,omitempty"`
 }
 
 type fields struct {
 	Title string `json:"title"`
 	Path  string `json:"path"`
-}
-
-type checks struct {
 }
 
 type message struct {
@@ -26,6 +27,6 @@ type subscribe struct {
 	BroadcasterUserID    string `json:"broadcaster_user_id,omitempty"`
 	BroadcasterUserLogin string `json:"broadcaster_user_login,omitempty"`
 	BroadcasterUserName  string `json:"broadcaster_user_name,omitempty"`
-	Tier                 string `json:"tier,omitempty"`
+	Tier                 int    `json:"tier,omitempty"`
 	IsGift               bool   `json:"is_gift,omitempty"`
 }

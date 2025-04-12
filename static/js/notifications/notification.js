@@ -38,3 +38,4 @@ export class Notification {
 		this.$el.style.display = display
 	}
 }
+

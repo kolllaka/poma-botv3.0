@@ -5,22 +5,22 @@
 			"checks": [
 				{
 					"conditions": {
-						"tier": 1,
-						"is_gift": true
+						"is_gift": true,
+						"tier": 1000
 					},
 					"fields": {
-						"title": "",
-						"path": ""
+						"title": "${user} получил в подарок подписку ${tier} уровня",
+						"path": "./static/notifications/raid/3.mp4"
 					}
 				},
 				{
 					"conditions": {
-						"tier": 1,
-						"is_gift": true
+						"is_gift": false,
+						"tier": 2000
 					},
 					"fields": {
-						"title": "",
-						"path": ""
+						"title": "${user} подписался тир-${tier} сабкой",
+						"path": "./static/notifications/raid/3.mp4"
 					}
 				}
 			]

@@ -5,6 +5,7 @@ import (
 
 	"github.com/kolllaka/poma-botv3.0/internal/model"
 	"github.com/kolllaka/poma-botv3.0/internal/notifications/raid"
+	"github.com/kolllaka/poma-botv3.0/internal/notifications/subscribe"
 	"github.com/kolllaka/poma-botv3.0/internal/services"
 	"github.com/kolllaka/poma-botv3.0/pkg/logging"
 )
@@ -86,7 +87,7 @@ func (r *notifications) InitNotifications(cfg *model.NotificationsConfig) {
 
 		switch notificationType {
 		case model.NOTIFICATION_SUBSCRIBE:
-			//! r.routes[notificationType] = subscribe.NewRoute(notificationType, notification.Checks)
+			r.routes[notificationType] = subscribe.NewRoute(notificationType, notification.Checks)
 		case model.NOTIFICATION_RAID:
 			r.routes[notificationType] = raid.NewRoute(notificationType, notification.Checks)
 

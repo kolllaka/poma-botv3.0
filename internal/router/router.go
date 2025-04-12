@@ -19,7 +19,6 @@ import (
 const (
 	AUG   = "aug"
 	MUSIC = "music"
-	RAID  = "raid"
 
 	TEMPLATE_PATH = "template/*.html"
 )
@@ -75,8 +74,11 @@ func (s *server) Start() *http.ServeMux {
 	router.HandleFunc("/"+AUG, s.aug)
 	router.HandleFunc("/"+AUG+"/ws", s.augws)
 
-	router.HandleFunc("/"+RAID, s.raid)
-	router.HandleFunc("/"+RAID+"/ws", s.raidws)
+	router.HandleFunc("/"+model.NOTIFICATION_RAID, s.raid)
+	router.HandleFunc("/"+model.NOTIFICATION_RAID+"/ws", s.raidws)
+
+	router.HandleFunc("/"+model.NOTIFICATION_SUBSCRIBE, s.subscribe)
+	router.HandleFunc("/"+model.NOTIFICATION_SUBSCRIBE+"/ws", s.subscribews)
 
 	router.HandleFunc("/"+MUSIC, s.music)
 	router.HandleFunc("/"+MUSIC+"/ws", s.musicws)
@@ -128,14 +130,14 @@ func (s *server) augws(w http.ResponseWriter, r *http.Request) {
 
 // raid
 func (s *server) raid(w http.ResponseWriter, r *http.Request) {
-	tmpl.ExecuteTemplate(w, RAID+".html", nil)
+	tmpl.ExecuteTemplate(w, model.NOTIFICATION_RAID+".html", nil)
 }
 
 func (s *server) raidws(w http.ResponseWriter, r *http.Request) {
 	conn, _ := upgrader.Upgrade(w, r, nil)
 	defer conn.Close()
-	s.clients[RAID] = conn
-	defer delete(s.clients, RAID)
+	s.clients[model.NOTIFICATION_RAID] = conn
+	defer delete(s.clients, model.NOTIFICATION_RAID)
 
 	go func() {
 		for {
@@ -158,7 +160,44 @@ func (s *server) raidws(w http.ResponseWriter, r *http.Request) {
 			logging.AnyAttr("notification", notification),
 		)
 
-		s.writeByteMsg(RAID, notification)
+		s.writeByteMsg(model.NOTIFICATION_RAID, notification)
+
+		time.Sleep(10 * time.Second)
+	}
+}
+
+// subscribe
+func (s *server) subscribe(w http.ResponseWriter, r *http.Request) {
+	tmpl.ExecuteTemplate(w, model.NOTIFICATION_SUBSCRIBE+".html", nil)
+}
+func (s *server) subscribews(w http.ResponseWriter, r *http.Request) {
+	conn, _ := upgrader.Upgrade(w, r, nil)
+	defer conn.Close()
+	s.clients[model.NOTIFICATION_SUBSCRIBE] = conn
+	defer delete(s.clients, model.NOTIFICATION_SUBSCRIBE)
+
+	go func() {
+		for {
+			mt, message, err := conn.ReadMessage()
+
+			if err != nil || mt == websocket.CloseMessage {
+				s.logger.Warn("error from socket", logging.ErrAttr(err))
+
+				break // Выходим из цикла, если клиент пытается закрыть соединение или связь прервана
+			}
+
+			go s.handleMessage(message)
+		}
+	}()
+
+	for {
+		notification := <-s.notifications.GetNotificationChannel(model.NOTIFICATION_SUBSCRIBE)
+
+		s.logger.Debug("recieve notification",
+			logging.AnyAttr("notification", notification),
+		)
+
+		s.writeByteMsg(model.NOTIFICATION_SUBSCRIBE, notification)
 
 		time.Sleep(10 * time.Second)
 	}

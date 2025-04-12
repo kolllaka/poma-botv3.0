@@ -125,11 +125,14 @@ func main() {
 	rewards.HandleReward()
 
 	// ! chan
-	var notificationsReader chan model.NotificationMessage = make(chan model.NotificationMessage)
+	isSwitch := false
+	var notificationsReader chan model.NotificationMessage = make(chan model.NotificationMessage, 2)
 	go func() {
 		for {
+			isSwitch = !isSwitch
 			time.Sleep(15 * time.Second)
-			notificationsReader <- getMsg("kolliaka", 10)
+			// notificationsReader <- getRaidMsg("kolliaka", 10)
+			notificationsReader <- getSubscribeMsg("kolliaka", 2000, isSwitch)
 		}
 	}()
 
@@ -225,20 +228,40 @@ func onMessage(shard int, topic string, data []byte) {
 }
 
 // !
-type msg struct {
+type raidMsg struct {
 	FromBroadcasterUserName string `json:"from_broadcaster_user_name,omitempty"`
 	Viewers                 int    `json:"viewers,omitempty"`
 }
 
-func getMsg(name string, viewers int) model.NotificationMessage {
+func getRaidMsg(name string, viewers int) model.NotificationMessage {
 	var network bytes.Buffer
-	json.NewEncoder(&network).Encode(msg{
+	json.NewEncoder(&network).Encode(raidMsg{
 		FromBroadcasterUserName: name,
 		Viewers:                 viewers,
 	})
 
 	return model.NotificationMessage{
 		"raid",
+		network.Bytes(),
+	}
+}
+
+type subscribeMsg struct {
+	UserName string `json:"user_name,omitempty"`
+	Tier     int    `json:"tier,omitempty"`
+	IsGift   bool   `json:"is_gift,omitempty"`
+}
+
+func getSubscribeMsg(name string, tier int, isGift bool) model.NotificationMessage {
+	var network bytes.Buffer
+	json.NewEncoder(&network).Encode(subscribeMsg{
+		UserName: name,
+		Tier:     tier,
+		IsGift:   isGift,
+	})
+
+	return model.NotificationMessage{
+		"subscribe",
 		network.Bytes(),
 	}
 }
