@@ -1,8 +1,13 @@
 package resubscribe
 
 type conf struct {
-	fields `json:"fields"`
-	Url    string `json:"url"`
+	conditions `json:"conditions"`
+	fields     `json:"fields"`
+}
+
+type conditions struct {
+	Tier  int `json:"tier,omitempty"`
+	Month int `json:"month,omitempty"`
 }
 
 type fields struct {
@@ -10,20 +15,20 @@ type fields struct {
 	Path  string `json:"path"`
 }
 
-type Message struct {
-	Title string `json:"title"`
-	Link  string `json:"link"`
-	Msg   string `json:"msg"`
+type message struct {
+	Title   string `json:"title"`
+	Link    string `json:"link"`
+	Message string `json:"message"`
 }
 
-type reSubscribe struct {
+type resubscribe struct {
 	UserID               string `json:"user_id,omitempty"`
 	UserLogin            string `json:"user_login,omitempty"`
 	UserName             string `json:"user_name,omitempty"`
 	BroadcasterUserID    string `json:"broadcaster_user_id,omitempty"`
 	BroadcasterUserLogin string `json:"broadcaster_user_login,omitempty"`
 	BroadcasterUserName  string `json:"broadcaster_user_name,omitempty"`
-	Tier                 string `json:"tier,omitempty"`
+	Tier                 int    `json:"tier,omitempty"`
 	Message              struct {
 		Text   string `json:"text,omitempty"`
 		Emotes []struct {

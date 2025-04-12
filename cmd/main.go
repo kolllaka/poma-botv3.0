@@ -135,7 +135,8 @@ func main() {
 			// notificationsReader <- getSubscribeMsg("kolliaka", 2000, isSwitch)
 			// notificationsReader <- getFollowMsg("kolliaka")
 			// notificationsReader <- getSubgiftMsg("kolliaka", 10, 2000, 2000, isSwitch)
-			notificationsReader <- getCheerMsg("kolliaka", "хочу передать привет собаке", 2000, isSwitch)
+			// notificationsReader <- getCheerMsg("kolliaka", "хочу передать привет собаке", 2000, isSwitch)
+			notificationsReader <- getResubscribeMsg("kolliaka", "хочу передать привет собаке", 2000, 12)
 
 		}
 	}()
@@ -338,6 +339,33 @@ func getCheerMsg(
 
 	return model.NotificationMessage{
 		"cheer",
+		network.Bytes(),
+	}
+}
+
+type resubscribeMsg struct {
+	UserName         string `json:"user_name,omitempty"`
+	Message          string `json:"message,omitempty"`
+	Tier             int    `json:"tier,omitempty"`
+	CumulativeMonths int    `json:"cumulative_months,omitempty"`
+}
+
+func getResubscribeMsg(
+	user string,
+	message string,
+	tier int,
+	month int,
+) model.NotificationMessage {
+	var network bytes.Buffer
+	json.NewEncoder(&network).Encode(resubscribeMsg{
+		UserName:         user,
+		Message:          message,
+		Tier:             tier,
+		CumulativeMonths: month,
+	})
+
+	return model.NotificationMessage{
+		"resubscribe",
 		network.Bytes(),
 	}
 }

@@ -10,6 +10,7 @@
   font-size: 40px;
   color: red;
   text-align: center;
+  max-width: 500px;
 }
 .notification__source {
   display: flex;

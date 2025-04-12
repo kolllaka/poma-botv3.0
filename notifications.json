@@ -108,6 +108,21 @@
 					}
 				}
 			]
+		},
+		{
+			"type": "resubscribe",
+			"checks": [
+				{
+					"conditions": {
+						"tier": 2000,
+						"month": 0
+					},
+					"fields": {
+						"title": "${user} ресабнулся тир-${tier} сабкой. ${user} котик уже ${month} месяцев",
+						"path": "./static/notifications/raid/3.mp4"
+					}
+				}
+			]
 		}
 	]
 }

@@ -4,63 +4,85 @@ import (
 	"bytes"
 	"encoding/json"
 	"fmt"
-	"math/rand"
-	"os"
-	"path/filepath"
-	"time"
+	"strings"
 
 	"github.com/kolllaka/poma-botv3.0/internal/model"
+	m "github.com/kolllaka/poma-botv3.0/internal/notifications/_misc"
 )
 
-type route struct {
-	rewardType        string
-	conf              conf
-	notificationFiles []string
+type fillText func(msg resubscribe) string
+
+var parcingMap map[string]fillText = map[string]fillText{
+	"tier": func(msg resubscribe) string {
+		return fmt.Sprint(msg.Tier / 1000)
+	},
+	"user": func(msg resubscribe) string {
+		return msg.UserName
+	},
+	"month": func(msg resubscribe) string {
+		return fmt.Sprint(msg.CumulativeMonths)
+	},
 }
 
-func NewRoute(rewardType string, rawConf json.RawMessage) *route {
-	var conf conf
-	json.Unmarshal(rawConf, &conf)
+type route struct {
+	notificationType string
+	confs            []conf
+}
 
-	files, err := os.ReadDir(conf.Path)
-	if err != nil {
-		panic(err)
-	}
-
-	var notificationFiles []string
-
-	for _, file := range files {
-		notificationFiles = append(notificationFiles, file.Name())
-	}
+func NewRoute(notificationType string, rawConf json.RawMessage) *route {
+	var confs []conf
+	json.Unmarshal(rawConf, &confs)
 
 	return &route{
-		conf:              conf,
-		rewardType:        rewardType,
-		notificationFiles: notificationFiles,
+		confs:            confs,
+		notificationType: notificationType,
 	}
 }
 
-func (r *route) RunRoute(msg model.RewardMessage) (string, []byte, error) {
-	s1 := rand.NewSource(time.Now().UnixNano())
-	r1 := rand.New(s1)
-	num := r1.Intn(len(r.notificationFiles))
-	name := r.notificationFiles[num]
+func (r *route) RunRoute(msg model.NotificationMessage) (string, []byte, error) {
+	var resubscribeMsg resubscribe
+	json.Unmarshal(msg.Data, &resubscribeMsg)
 
-	var reSubMsg reSubscribe
-	json.Unmarshal(msg.Data, &reSubMsg)
+	index, err := r.checks(resubscribeMsg)
+	if err != nil {
+		return r.notificationType, nil, fmt.Errorf("%w: %d months, %d tier", err, resubscribeMsg.CumulativeMonths, resubscribeMsg.Tier)
+	}
 
-	rBody := Message{
-		Title: fmt.Sprintf(r.conf.Title, reSubMsg.UserName, reSubMsg.Tier, reSubMsg.CumulativeMonths),
-		Link:  r.getLink(name),
-		Msg:   reSubMsg.Message.Text,
+	title := r.confs[index].Title
+	words := m.GetArraySwitchingWordsFromTitle(title)
+
+	for _, word := range words {
+		newWord, ok := parcingMap[word]
+		if !ok {
+			continue
+		}
+
+		title = strings.Replace(title, fmt.Sprintf("${%s}", word), newWord(resubscribeMsg), 1)
+	}
+
+	link, err := m.GetRandomFileLinkFromIndex(r.confs[index].Path)
+	if err != nil {
+		return r.notificationType, nil, err
+	}
+
+	rBody := message{
+		Title:   title,
+		Link:    link,
+		Message: resubscribeMsg.Message.Text,
 	}
 
 	var network bytes.Buffer
 	json.NewEncoder(&network).Encode(rBody)
 
-	return r.rewardType, network.Bytes(), nil
+	return r.notificationType, network.Bytes(), nil
 }
 
-func (r *route) getLink(name string) string {
-	return filepath.Join(r.conf.Url, name)
+func (r *route) checks(resubscribeMsg resubscribe) (int, error) {
+	for i, conf := range r.confs {
+		if (resubscribeMsg.Tier >= conf.conditions.Tier) && (resubscribeMsg.CumulativeMonths >= conf.conditions.Month) {
+			return i, nil
+		}
+	}
+
+	return -1, model.ErrorResubscribeNotAllowedConditions
 }
