@@ -4,6 +4,7 @@ import (
 	"strings"
 
 	"github.com/kolllaka/poma-botv3.0/internal/model"
+	"github.com/kolllaka/poma-botv3.0/internal/notifications/cheer"
 	"github.com/kolllaka/poma-botv3.0/internal/notifications/follow"
 	"github.com/kolllaka/poma-botv3.0/internal/notifications/raid"
 	"github.com/kolllaka/poma-botv3.0/internal/notifications/subgift"
@@ -96,6 +97,8 @@ func (r *notifications) InitNotifications(cfg *model.NotificationsConfig) {
 			r.routes[notificationType] = follow.NewRoute(notificationType, notification.Checks)
 		case model.NOTIFICATION_SUBGIFT:
 			r.routes[notificationType] = subgift.NewRoute(notificationType, notification.Checks)
+		case model.NOTIFICATION_CHEER:
+			r.routes[notificationType] = cheer.NewRoute(notificationType, notification.Checks)
 
 		default:
 			r.logger.Warn("unknown notification type", logging.AnyAttr("notification", notification))

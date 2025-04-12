@@ -134,7 +134,8 @@ func main() {
 			// notificationsReader <- getRaidMsg("kolliaka", 10)
 			// notificationsReader <- getSubscribeMsg("kolliaka", 2000, isSwitch)
 			// notificationsReader <- getFollowMsg("kolliaka")
-			notificationsReader <- getSubgiftMsg("kolliaka", 10, 2000, 2000, isSwitch)
+			// notificationsReader <- getSubgiftMsg("kolliaka", 10, 2000, 2000, isSwitch)
+			notificationsReader <- getCheerMsg("kolliaka", "хочу передать привет собаке", 2000, isSwitch)
 
 		}
 	}()
@@ -310,6 +311,33 @@ func getSubgiftMsg(name string,
 
 	return model.NotificationMessage{
 		"subgift",
+		network.Bytes(),
+	}
+}
+
+type cheerMsg struct {
+	UserName    string `json:"user_name,omitempty"`
+	Message     string `json:"message,omitempty"`
+	Bits        int    `json:"bits,omitempty"`
+	IsAnonymous bool   `json:"is_anonymous,omitempty"`
+}
+
+func getCheerMsg(
+	name string,
+	message string,
+	bits int,
+	is_anonymous bool,
+) model.NotificationMessage {
+	var network bytes.Buffer
+	json.NewEncoder(&network).Encode(cheerMsg{
+		UserName:    name,
+		Message:     message,
+		Bits:        bits,
+		IsAnonymous: is_anonymous,
+	})
+
+	return model.NotificationMessage{
+		"cheer",
 		network.Bytes(),
 	}
 }

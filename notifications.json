@@ -83,6 +83,31 @@
 					}
 				}
 			]
+		},
+		{
+			"type": "cheer",
+			"checks": [
+				{
+					"conditions": {
+						"is_anonym": true,
+						"bits": 0
+					},
+					"fields": {
+						"title": "инкогнито подарил каналу ${bits} битсов",
+						"path": "./static/notifications/raid/3.mp4"
+					}
+				},
+				{
+					"conditions": {
+						"is_anonym": false,
+						"bits": 0
+					},
+					"fields": {
+						"title": "${user} подарил каналу ${bits} битсов",
+						"path": "./static/notifications/raid/3.mp4"
+					}
+				}
+			]
 		}
 	]
 }

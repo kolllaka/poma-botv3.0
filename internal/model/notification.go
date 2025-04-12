@@ -7,6 +7,7 @@ const (
 	NOTIFICATION_RAID      = "raid"
 	NOTIFICATION_FOLLOW    = "follow"
 	NOTIFICATION_SUBGIFT   = "subgift"
+	NOTIFICATION_CHEER     = "cheer"
 
 	NOTIFICATION_NAME = "notification"
 )

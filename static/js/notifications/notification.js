@@ -7,6 +7,9 @@ export class Notification {
 
 		this.video = this.$el.querySelector("video")
 		this.title = this.$el.querySelector("[data-field='title']")
+		if (this.$el.querySelector("[data-field='message']")) {
+			this.message = this.$el.querySelector("[data-field='message']")
+		}
 	}
 
 	startNotification(data, timeout = 10000) {
@@ -24,6 +27,9 @@ export class Notification {
 			}
 
 			this.title.innerHTML = data.title
+			if (data.message) {
+				this.message.innerHTML = data.message
+			}
 		}
 	}
 
