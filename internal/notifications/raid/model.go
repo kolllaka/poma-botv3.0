@@ -1,8 +1,12 @@
 package raid
 
 type conf struct {
-	fields `json:"fields"`
-	Url    string `json:"url"`
+	conditions `json:"conditions"`
+	fields     `json:"fields"`
+}
+
+type conditions struct {
+	Viewers int `json:"viewers"`
 }
 
 type fields struct {
@@ -10,9 +14,9 @@ type fields struct {
 	Path  string `json:"path"`
 }
 
-type Message struct {
+type message struct {
 	Title string `json:"title"`
-	Link  string `json:"path"`
+	Link  string `json:"link"`
 }
 
 type raid struct {

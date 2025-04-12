@@ -1,24 +1,21 @@
 package notifications
 
 import (
-	"encoding/json"
-	"fmt"
 	"strings"
 
 	"github.com/kolllaka/poma-botv3.0/internal/model"
-	"github.com/kolllaka/poma-botv3.0/internal/notifications/subscribe"
+	"github.com/kolllaka/poma-botv3.0/internal/notifications/raid"
 	"github.com/kolllaka/poma-botv3.0/internal/services"
 	"github.com/kolllaka/poma-botv3.0/pkg/logging"
 )
 
-type Rewards interface {
-	HandleReward()
-	InitRewards(cfg *model.NotificationsConfig)
+type Notifications interface {
+	HandleNotification()
+	InitNotifications(cfg *model.NotificationsConfig)
 
-	GetRewardChannel(rewardType string) chan []byte
-	GetPathToUrl() []string
+	GetNotificationChannel(notificationType string) chan []byte
 }
-type rewards struct {
+type notifications struct {
 	logger   *logging.Logger
 	services services.Service
 
@@ -26,26 +23,25 @@ type rewards struct {
 	reader chan model.NotificationMessage
 
 	WritersChan map[string]chan []byte
-
-	pathToUrl []string
+	ErrorChan   chan error
 }
 
 func New(
 	logger *logging.Logger,
 	services services.Service,
 	reader chan model.NotificationMessage,
-) Rewards {
-	return &rewards{
+) Notifications {
+	return &notifications{
 		logger:      logger,
 		services:    services,
 		routes:      make(map[string]Route),
 		reader:      reader,
 		WritersChan: make(map[string]chan []byte),
-		pathToUrl:   []string{},
+		ErrorChan:   make(chan error),
 	}
 }
 
-func (r *rewards) HandleReward() {
+func (r *notifications) HandleNotification() {
 	go func(reader chan model.NotificationMessage) {
 		for {
 			notification := <-reader
@@ -80,13 +76,15 @@ func (r *rewards) HandleReward() {
 	}(r.reader)
 }
 
-func (r *rewards) InitRewards(cfg *model.NotificationsConfig) {
+func (r *notifications) InitNotifications(cfg *model.NotificationsConfig) {
 	for _, notification := range cfg.Notifications {
 		notificationType := strings.ToLower(notification.Type)
 
 		switch notificationType {
 		case model.NOTIFICATION_SUBSCRIBE:
-			r.routes[notificationType] = subscribe.NewRoute(notificationType, notification.Checks)
+			//! r.routes[notificationType] = subscribe.NewRoute(notificationType, notification.Checks)
+		case model.NOTIFICATION_RAID:
+			r.routes[notificationType] = raid.NewRoute(notificationType, notification.Checks)
 
 		default:
 			r.logger.Warn("unknown notification type", logging.AnyAttr("notification", notification))
@@ -99,26 +97,10 @@ func (r *rewards) InitRewards(cfg *model.NotificationsConfig) {
 		}
 	}
 
-	r.logger.Debug("rewards initialized", logging.AnyAttr("rewards", r.routes), logging.AnyAttr("channels", r.WritersChan))
+	r.logger.Debug("notifications initialized", logging.AnyAttr("notifications", r.routes), logging.AnyAttr("channels", r.WritersChan))
 }
 
-// GetRewardChannel implements Rewards.
-func (r *rewards) GetRewardChannel(rewardType string) chan []byte {
-	return r.WritersChan[rewardType]
-}
-
-func (r *rewards) GetPathToUrl() []string {
-	return r.pathToUrl
-}
-
-func (r *rewards) appendPathToUrl(checks json.RawMessage) string {
-	type path struct {
-		Path string `json:"path"`
-	}
-	f := path{}
-	json.Unmarshal(checks, &f)
-
-	r.pathToUrl = append(r.pathToUrl, f.Path)
-
-	return fmt.Sprintf("/%s%d/", model.NOTIFICATION_NAME, len(r.pathToUrl)-1)
+// GetNotificationChannel implements Notifications.
+func (r *notifications) GetNotificationChannel(notificationType string) chan []byte {
+	return r.WritersChan[notificationType]
 }

@@ -1,10 +1,10 @@
 {
-	"notification": [
+	"notifications": [
 		{
 			"type": "subscribe",
 			"checks": [
 				{
-					"condition": {
+					"conditions": {
 						"tier": 1,
 						"is_gift": true
 					},
@@ -14,13 +14,27 @@
 					}
 				},
 				{
-					"condition": {
+					"conditions": {
 						"tier": 1,
 						"is_gift": true
 					},
 					"fields": {
 						"title": "",
 						"path": ""
+					}
+				}
+			]
+		},
+		{
+			"type": "raid",
+			"checks": [
+				{
+					"conditions": {
+						"viewers": 1
+					},
+					"fields": {
+						"title": "${channel} зарейдил на ${count}зрителей${channel}",
+						"path": "./static/notifications/raid"
 					}
 				}
 			]
