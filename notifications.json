@@ -58,6 +58,31 @@
 					}
 				}
 			]
+		},
+		{
+			"type": "subgift",
+			"checks": [
+				{
+					"conditions": {
+						"is_anonym": true,
+						"tier": 2000
+					},
+					"fields": {
+						"title": "инкогнито подарил каналу ${gift_count} тир-${tier} сабок",
+						"path": "./static/notifications/raid/3.mp4"
+					}
+				},
+				{
+					"conditions": {
+						"is_anonym": false,
+						"tier": 2000
+					},
+					"fields": {
+						"title": "${user} подарил каналу ${gift_count} тир-${tier} сабок. всего подаренно ${total_gift} сабок",
+						"path": "./static/notifications/raid/3.mp4"
+					}
+				}
+			]
 		}
 	]
 }

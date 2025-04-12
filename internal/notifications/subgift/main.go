@@ -4,62 +4,87 @@ import (
 	"bytes"
 	"encoding/json"
 	"fmt"
-	"math/rand"
-	"os"
-	"path/filepath"
-	"time"
+	"strings"
 
 	"github.com/kolllaka/poma-botv3.0/internal/model"
+	m "github.com/kolllaka/poma-botv3.0/internal/notifications/_misc"
 )
 
-type route struct {
-	rewardType        string
-	conf              conf
-	notificationFiles []string
+type fillText func(msg subgift) string
+
+var parcingMap map[string]fillText = map[string]fillText{
+	"user": func(msg subgift) string {
+		return msg.UserName
+	},
+	"gift_count": func(msg subgift) string {
+		return fmt.Sprint(msg.Total)
+	},
+	"tier": func(msg subgift) string {
+		return fmt.Sprint(msg.Tier / 1000)
+	},
+	"total_gift": func(msg subgift) string {
+		return fmt.Sprint(msg.CumulativeTotal)
+	},
 }
 
-func NewRoute(rewardType string, rawConf json.RawMessage) *route {
-	var conf conf
-	json.Unmarshal(rawConf, &conf)
+type route struct {
+	notificationType string
+	confs            []conf
+}
 
-	files, err := os.ReadDir(conf.Path)
-	if err != nil {
-		panic(err)
-	}
-
-	var notificationFiles []string
-
-	for _, file := range files {
-		notificationFiles = append(notificationFiles, file.Name())
-	}
+func NewRoute(notificationType string, rawConf json.RawMessage) *route {
+	var confs []conf
+	json.Unmarshal(rawConf, &confs)
 
 	return &route{
-		conf:              conf,
-		rewardType:        rewardType,
-		notificationFiles: notificationFiles,
+		confs:            confs,
+		notificationType: notificationType,
 	}
 }
 
-func (r *route) RunRoute(msg model.RewardMessage) (string, []byte, error) {
-	s1 := rand.NewSource(time.Now().UnixNano())
-	r1 := rand.New(s1)
-	num := r1.Intn(len(r.notificationFiles))
-	name := r.notificationFiles[num]
+func (r *route) RunRoute(msg model.NotificationMessage) (string, []byte, error) {
+	var subgiftMsg subgift
+	json.Unmarshal(msg.Data, &subgiftMsg)
 
-	var subGiftMsg subscribeGift
-	json.Unmarshal(msg.Data, &subGiftMsg)
+	index, err := r.checks(subgiftMsg)
+	if err != nil {
+		return r.notificationType, nil, fmt.Errorf("%w: %d tier, %t isAnonym", err, subgiftMsg.Tier, subgiftMsg.IsAnonymous)
+	}
 
-	rBody := Message{
-		Title: fmt.Sprintf(r.conf.Title, subGiftMsg.UserName, subGiftMsg.Total),
-		Link:  r.getLink(name),
+	title := r.confs[index].Title
+	words := m.GetArraySwitchingWordsFromTitle(title)
+
+	for _, word := range words {
+		newWord, ok := parcingMap[word]
+		if !ok {
+			continue
+		}
+
+		title = strings.Replace(title, fmt.Sprintf("${%s}", word), newWord(subgiftMsg), 1)
+	}
+
+	link, err := m.GetRandomFileLinkFromIndex(r.confs[index].Path)
+	if err != nil {
+		return r.notificationType, nil, err
+	}
+
+	rBody := message{
+		Title: title,
+		Link:  link,
 	}
 
 	var network bytes.Buffer
 	json.NewEncoder(&network).Encode(rBody)
 
-	return r.rewardType, network.Bytes(), nil
+	return r.notificationType, network.Bytes(), nil
 }
 
-func (r *route) getLink(name string) string {
-	return filepath.Join(r.conf.Url, name)
+func (r *route) checks(subgiftMsg subgift) (int, error) {
+	for i, conf := range r.confs {
+		if (subgiftMsg.IsAnonymous == conf.conditions.IsAnonym) && (subgiftMsg.Tier >= conf.conditions.Tier) {
+			return i, nil
+		}
+	}
+
+	return -1, model.ErrorSubgiftNotAllowedConditions
 }

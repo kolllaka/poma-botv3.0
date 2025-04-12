@@ -1,8 +1,13 @@
 package subgift
 
 type conf struct {
-	fields `json:"fields"`
-	Url    string `json:"url"`
+	conditions `json:"conditions"`
+	fields     `json:"fields"`
+}
+
+type conditions struct {
+	IsAnonym bool `json:"is_anonym,omitempty"`
+	Tier     int  `json:"tier,omitempty"`
 }
 
 type fields struct {
@@ -10,12 +15,12 @@ type fields struct {
 	Path  string `json:"path"`
 }
 
-type Message struct {
+type message struct {
 	Title string `json:"title"`
 	Link  string `json:"link"`
 }
 
-type subscribeGift struct {
+type subgift struct {
 	UserID               string `json:"user_id,omitempty"`
 	UserLogin            string `json:"user_login,omitempty"`
 	UserName             string `json:"user_name,omitempty"`
@@ -23,7 +28,7 @@ type subscribeGift struct {
 	BroadcasterUserLogin string `json:"broadcaster_user_login,omitempty"`
 	BroadcasterUserName  string `json:"broadcaster_user_name,omitempty"`
 	Total                int    `json:"total,omitempty"`
-	Tier                 string `json:"tier,omitempty"`
+	Tier                 int    `json:"tier,omitempty"`
 	CumulativeTotal      int    `json:"cumulative_total,omitempty"`
 	IsAnonymous          bool   `json:"is_anonymous,omitempty"`
 }

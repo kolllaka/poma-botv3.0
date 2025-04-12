@@ -133,7 +133,8 @@ func main() {
 			time.Sleep(15 * time.Second)
 			// notificationsReader <- getRaidMsg("kolliaka", 10)
 			// notificationsReader <- getSubscribeMsg("kolliaka", 2000, isSwitch)
-			notificationsReader <- getFollowMsg("kolliaka")
+			// notificationsReader <- getFollowMsg("kolliaka")
+			notificationsReader <- getSubgiftMsg("kolliaka", 10, 2000, 2000, isSwitch)
 
 		}
 	}()
@@ -280,6 +281,35 @@ func getFollowMsg(name string) model.NotificationMessage {
 
 	return model.NotificationMessage{
 		"follow",
+		network.Bytes(),
+	}
+}
+
+type subgiftMsg struct {
+	UserName        string `json:"user_name,omitempty"`
+	Total           int    `json:"total,omitempty"`
+	Tier            int    `json:"tier,omitempty"`
+	CumulativeTotal int    `json:"cumulative_total,omitempty"`
+	IsAnonymous     bool   `json:"is_anonymous,omitempty"`
+}
+
+func getSubgiftMsg(name string,
+	total int,
+	tier int,
+	cumulative_total int,
+	is_anonymous bool,
+) model.NotificationMessage {
+	var network bytes.Buffer
+	json.NewEncoder(&network).Encode(subgiftMsg{
+		UserName:        name,
+		Total:           total,
+		Tier:            tier,
+		CumulativeTotal: cumulative_total,
+		IsAnonymous:     is_anonymous,
+	})
+
+	return model.NotificationMessage{
+		"subgift",
 		network.Bytes(),
 	}
 }

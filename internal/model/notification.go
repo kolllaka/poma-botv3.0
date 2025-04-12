@@ -6,6 +6,7 @@ const (
 	NOTIFICATION_SUBSCRIBE = "subscribe"
 	NOTIFICATION_RAID      = "raid"
 	NOTIFICATION_FOLLOW    = "follow"
+	NOTIFICATION_SUBGIFT   = "subgift"
 
 	NOTIFICATION_NAME = "notification"
 )
