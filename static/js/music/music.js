@@ -69,7 +69,7 @@ getDuration.onloadedmetadata = function () {
 const url = 'ws://127.0.0.1:8080/music/ws'
 const ws = new ConnectWS(url)
 ws.onOpen = function (event) {
-	console.log(`ws conn open to  ${url}`);
+	console.log(`ws conn open to  ${event.target.url}`);
 	getDuration.start()
 }
 ws.onMessage = function (event) {
@@ -77,24 +77,6 @@ ws.onMessage = function (event) {
 	console.log("data from ws", data);
 
 	proccessDataFromWS(data)
-}
-ws.onClose = function (event) {
-	if (event.wasClean) {
-		console.log(`[close] Соединение закрыто чисто, код=${event.code} причина=${event.reason}`);
-		ws.socket.close();
-	} else {
-		// например, сервер убил процесс или сеть недоступна
-		// обычно в этом случае event.code 1006
-		console.log('[close ws] Соединение прервано');
-	}
-
-	setTimeout(function () {
-		ws.connect(url)
-	}, 1000);
-}
-ws.onError = function (error) {
-	console.log(`[error] ${error}`);
-	ws.socket.close();
 }
 ws.setup()
 const sendSocket = (data) => {

@@ -10,6 +10,7 @@ import (
 	"github.com/gorilla/websocket"
 
 	"github.com/kolllaka/poma-botv3.0/internal/model"
+	"github.com/kolllaka/poma-botv3.0/internal/notifications"
 	"github.com/kolllaka/poma-botv3.0/internal/rewards"
 	"github.com/kolllaka/poma-botv3.0/internal/services"
 	"github.com/kolllaka/poma-botv3.0/pkg/logging"
@@ -18,6 +19,7 @@ import (
 const (
 	AUG   = "aug"
 	MUSIC = "music"
+	RAID  = "raid"
 
 	TEMPLATE_PATH = "template/*.html"
 )
@@ -31,7 +33,6 @@ var (
 			return true // Пропускаем любой запрос
 		},
 	}
-	augFiles []string
 )
 
 func init() {
@@ -42,8 +43,9 @@ type server struct {
 	logger *logging.Logger
 	conf   *model.EnvConfig
 
-	services services.Service
-	rewards  rewards.Rewards
+	services      services.Service
+	rewards       rewards.Rewards
+	notifications notifications.Notifications
 
 	clients map[string]*websocket.Conn
 	router  *http.ServeMux
@@ -55,13 +57,15 @@ func New(
 
 	services services.Service,
 	rewards rewards.Rewards,
+	notifications notifications.Notifications,
 ) *server {
 	return &server{
-		logger:   logger,
-		conf:     conf,
-		services: services,
-		rewards:  rewards,
-		clients:  make(map[string]*websocket.Conn),
+		logger:        logger,
+		conf:          conf,
+		services:      services,
+		rewards:       rewards,
+		notifications: notifications,
+		clients:       make(map[string]*websocket.Conn),
 	}
 }
 
@@ -70,6 +74,9 @@ func (s *server) Start() *http.ServeMux {
 
 	router.HandleFunc("/"+AUG, s.aug)
 	router.HandleFunc("/"+AUG+"/ws", s.augws)
+
+	router.HandleFunc("/"+RAID, s.raid)
+	router.HandleFunc("/"+RAID+"/ws", s.raidws)
 
 	router.HandleFunc("/"+MUSIC, s.music)
 	router.HandleFunc("/"+MUSIC+"/ws", s.musicws)
@@ -89,16 +96,12 @@ func (s *server) RegFileServer(path string, root string) {
 func (s *server) aug(w http.ResponseWriter, r *http.Request) {
 	tmpl.ExecuteTemplate(w, AUG+".html", nil)
 }
+
 func (s *server) augws(w http.ResponseWriter, r *http.Request) {
 	conn, _ := upgrader.Upgrade(w, r, nil)
 	defer conn.Close()
 	s.clients[AUG] = conn
 	defer delete(s.clients, AUG)
-
-	type ReqAug struct {
-		Name string `json:"name,omitempty"`
-		Link string `json:"link,omitempty"`
-	}
 
 	go func() {
 		for {
@@ -118,6 +121,44 @@ func (s *server) augws(w http.ResponseWriter, r *http.Request) {
 		reward := <-s.rewards.GetRewardChannel(model.REWARD_AUGURY)
 
 		s.writeByteMsg(AUG, reward)
+
+		time.Sleep(10 * time.Second)
+	}
+}
+
+// raid
+func (s *server) raid(w http.ResponseWriter, r *http.Request) {
+	tmpl.ExecuteTemplate(w, RAID+".html", nil)
+}
+
+func (s *server) raidws(w http.ResponseWriter, r *http.Request) {
+	conn, _ := upgrader.Upgrade(w, r, nil)
+	defer conn.Close()
+	s.clients[RAID] = conn
+	defer delete(s.clients, RAID)
+
+	go func() {
+		for {
+			mt, message, err := conn.ReadMessage()
+
+			if err != nil || mt == websocket.CloseMessage {
+				s.logger.Warn("error from socket", logging.ErrAttr(err))
+
+				break // Выходим из цикла, если клиент пытается закрыть соединение или связь прервана
+			}
+
+			go s.handleMessage(message)
+		}
+	}()
+
+	for {
+		notification := <-s.notifications.GetNotificationChannel(model.NOTIFICATION_RAID)
+
+		s.logger.Debug("recieve notification",
+			logging.AnyAttr("notification", notification),
+		)
+
+		s.writeByteMsg(RAID, notification)
 
 		time.Sleep(10 * time.Second)
 	}

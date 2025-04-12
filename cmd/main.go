@@ -1,6 +1,7 @@
 package main
 
 import (
+	"bytes"
 	"encoding/json"
 	"fmt"
 	"io"
@@ -16,6 +17,7 @@ import (
 	"github.com/kolllaka/poma-botv3.0/internal/model"
 	"github.com/kolllaka/poma-botv3.0/internal/music/files"
 	"github.com/kolllaka/poma-botv3.0/internal/music/youtube"
+	"github.com/kolllaka/poma-botv3.0/internal/notifications"
 	"github.com/kolllaka/poma-botv3.0/internal/rewards"
 	"github.com/kolllaka/poma-botv3.0/internal/router"
 	"github.com/kolllaka/poma-botv3.0/internal/services"
@@ -37,8 +39,9 @@ const (
 	LOGS_IS_SOURCE = true
 	LOGS_IS_JSON   = true
 
-	REWARDS_CFG_PATH = "./rewards.json"
-	DB_PATH          = "./storage/music.db"
+	REWARDS_CFG_PATH       = "./rewards.json"
+	NOTIFICATIONS_CFG_PATH = "./notifications.json"
+	DB_PATH                = "./storage/music.db"
 )
 
 func init() {
@@ -81,8 +84,16 @@ func main() {
 
 		os.Exit(1)
 	}
-
 	logger.Debug("Rewards config load", logging.AnyAttr("cfg", rewardsCfg))
+
+	// notifications config
+	notificationsCfg := model.NewNotificationConfig()
+	if err := config.LoadJsonByPath(NOTIFICATIONS_CFG_PATH, notificationsCfg); err != nil {
+		logger.Error("Error loading notifications config", logging.ErrAttr(err))
+
+		os.Exit(1)
+	}
+	logger.Debug("Notifications config load", logging.AnyAttr("cfg", notificationsCfg))
 
 	// youtube api
 	yApi := youtubeapi.New(envCfg.YoutubeKey)
@@ -109,9 +120,23 @@ func main() {
 	services := services.New(logger, fmusic, ymusic, store)
 
 	// init rewards handler
-	reward := rewards.New(logger, services, twitchReader)
-	reward.InitRewards(rewardsCfg)
-	reward.HandleReward()
+	rewards := rewards.New(logger, services, twitchReader)
+	rewards.InitRewards(rewardsCfg)
+	rewards.HandleReward()
+
+	// ! chan
+	var notificationsReader chan model.NotificationMessage = make(chan model.NotificationMessage)
+	go func() {
+		for {
+			time.Sleep(15 * time.Second)
+			notificationsReader <- getMsg("kolliaka", 10)
+		}
+	}()
+
+	// init notifications handler
+	notifications := notifications.New(logger, services, notificationsReader)
+	notifications.InitNotifications(notificationsCfg)
+	notifications.HandleNotification()
 
 	// connect to PubSub
 	ps := twitch.PubSub()
@@ -120,13 +145,13 @@ func main() {
 	defer ps.Close()
 
 	// Start Server
-	server := router.New(logger, envCfg, services, reward)
+	server := router.New(logger, envCfg, services, rewards, notifications)
 	router := server.Start()
 
 	router.Handle("/static/", http.StripPrefix("/static/", http.FileServer(http.Dir("./static"))))
 	router.Handle("/audio/", http.StripPrefix("/audio/", http.FileServer(http.Dir(envCfg.MyPlaylistPath))))
 
-	for i, path := range reward.GetPathToUrl() {
+	for i, path := range rewards.GetPathToUrl() {
 		server.RegFileServer(fmt.Sprintf("/%s%d/", model.REWARD_NAME, i), path)
 	}
 
@@ -196,5 +221,24 @@ func onMessage(shard int, topic string, data []byte) {
 		}
 
 		twitchReader <- rmsg
+	}
+}
+
+// !
+type msg struct {
+	FromBroadcasterUserName string `json:"from_broadcaster_user_name,omitempty"`
+	Viewers                 int    `json:"viewers,omitempty"`
+}
+
+func getMsg(name string, viewers int) model.NotificationMessage {
+	var network bytes.Buffer
+	json.NewEncoder(&network).Encode(msg{
+		FromBroadcasterUserName: name,
+		Viewers:                 viewers,
+	})
+
+	return model.NotificationMessage{
+		"raid",
+		network.Bytes(),
 	}
 }

@@ -1,47 +1,6 @@
-let socket
-function connectWS(WEBSOCKET, handler, onopenhandler) {
-
-	socket = new WebSocket(WEBSOCKET);
-
-	socket.onopen = function (e) {
-		console.log(`ws conn open to  ${WEBSOCKET}`);
-
-		if (!onopenhandler) {
-			console.log("handler not allowed");
-
-			return
-		}
-
-		onopenhandler()
-	};
-
-	socket.onmessage = function (e) {
-		console.log(`[event] ${e}`);
-	};
-
-	socket.onclose = function (event) {
-		if (event.wasClean) {
-			console.log(`[close] Соединение закрыто чисто, код=${event.code} причина=${event.reason}`);
-		} else {
-			// например, сервер убил процесс или сеть недоступна
-			// обычно в этом случае event.code 1006
-			console.log('[close ws] Соединение прервано');
-		}
-
-		setTimeout(function () {
-			connectWS();
-		}, 1000);
-	};
-
-	socket.onerror = function (error) {
-		console.log(`[error] ${error}`);
-		socket.close();
-	};
-}
-
-
 export class ConnectWS {
 	constructor(url) {
+		this.url = url
 		this.socket = this.connect(url)
 	}
 
@@ -56,19 +15,32 @@ export class ConnectWS {
 		return new WebSocket(url);
 	}
 
-	onOpen(e) {
-		console.log('not onOpen implement');
+	onOpen(event) {
+		console.log(`ws conn open to  ${event.target.url}`);
 	}
 
-	onMessage(e) {
-		console.log('not onMessage implement');
+	onMessage(event) {
+		const data = JSON.parse(event.data)
+		console.log("data from ws", data);
 	}
 
-	onClose(e) {
-		console.log('not onClose implement');
+	onClose(event) {
+		if (event.wasClean) {
+			console.log(`[close] Соединение закрыто чисто, код=${event.code} причина=${event.reason}`);
+			this.socket.close();
+		} else {
+			// например, сервер убил процесс или сеть недоступна
+			// обычно в этом случае event.code 1006
+			console.log('[close ws] Соединение прервано');
+		}
+
+		setTimeout(function () {
+			this.socket = new WebSocket(this.url)
+		}, 1000);
 	}
 
-	onError(e) {
-		console.log('not onError implement');
+	onError(error) {
+		console.log(`[error] ${error}`);
+		this.socket.close();
 	}
 }

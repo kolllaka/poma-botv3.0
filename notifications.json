@@ -30,10 +30,19 @@
 			"checks": [
 				{
 					"conditions": {
-						"viewers": 1
+						"viewers": 5
 					},
 					"fields": {
-						"title": "${channel} зарейдил на ${count}зрителей${channel}",
+						"title": "${channel} зарейдил на ${count} зрителей",
+						"path": "./static/notifications/raid/3.mp4"
+					}
+				},
+				{
+					"conditions": {
+						"viewers": 2
+					},
+					"fields": {
+						"title": "${channel} зарейдил на ${count} зрителя",
 						"path": "./static/notifications/raid"
 					}
 				}

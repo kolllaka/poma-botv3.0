@@ -57,21 +57,25 @@ func (r *notifications) HandleNotification() {
 				continue
 			}
 
-			go func() {
-				nType, rBody, err := route.RunRoute(notification)
-				if err != nil {
-					r.logger.Warn(
-						"RunRoute",
-						logging.StringAttr("notification type", nType),
-						logging.AnyAttr("body", string(rBody)),
-						logging.ErrAttr(err),
-					)
+			nType, rBody, err := route.RunRoute(notification)
+			if err != nil {
+				r.logger.Warn(
+					"RunRoute",
+					logging.StringAttr("notification type", nType),
+					logging.AnyAttr("body", string(rBody)),
+					logging.ErrAttr(err),
+				)
 
-					return
-				}
+				return
+			}
 
-				r.WritersChan[nType] <- rBody
-			}()
+			r.logger.Debug("rBody received",
+				logging.AnyAttr("rBody", rBody),
+				logging.StringAttr("nType", nType),
+				logging.AnyAttr("chan", r.WritersChan[nType]),
+			)
+
+			r.WritersChan[nType] <- rBody
 		}
 	}(r.reader)
 }
@@ -92,8 +96,8 @@ func (r *notifications) InitNotifications(cfg *model.NotificationsConfig) {
 			continue
 		}
 
-		if _, ok := r.WritersChan[notification.Type]; !ok {
-			r.WritersChan[notification.Type] = make(chan []byte)
+		if _, ok := r.WritersChan[notificationType]; !ok {
+			r.WritersChan[notificationType] = make(chan []byte)
 		}
 	}
 

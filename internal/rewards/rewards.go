@@ -62,21 +62,19 @@ func (r *rewards) HandleReward() {
 				continue
 			}
 
-			go func() {
-				rType, rBody, err := route.RunRoute(reward)
-				if err != nil {
-					r.logger.Warn(
-						"RunRoute",
-						logging.StringAttr("reward type", rType),
-						logging.AnyAttr("body", string(rBody)),
-						logging.ErrAttr(err),
-					)
+			rType, rBody, err := route.RunRoute(reward)
+			if err != nil {
+				r.logger.Warn(
+					"RunRoute",
+					logging.StringAttr("reward type", rType),
+					logging.AnyAttr("body", string(rBody)),
+					logging.ErrAttr(err),
+				)
 
-					return
-				}
+				return
+			}
 
-				r.WritersChan[rType] <- rBody
-			}()
+			r.WritersChan[rType] <- rBody
 		}
 	}(r.reader)
 }
