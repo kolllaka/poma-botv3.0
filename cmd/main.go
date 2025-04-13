@@ -35,8 +35,8 @@ var (
 
 const (
 	LOGS_FOLDER    = "./logs"
-	LOGS_LVL       = "debug"
-	LOGS_IS_SOURCE = true
+	LOGS_LVL       = "info"
+	LOGS_IS_SOURCE = false
 	LOGS_IS_JSON   = true
 
 	REWARDS_CFG_PATH       = "./rewards.json"
