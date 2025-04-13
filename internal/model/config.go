@@ -8,6 +8,9 @@ type EnvConfig struct {
 	Host           string `env:"HOST" env-default:"localhost"`
 	Port           int    `env:"PORT" env-default:"8080"`
 	UserId         int    `env:"USERID" env-required:"true"`
+	ESBotId        int    `env:"EVENTSUB_BOT_ID" env-required:"true"`
+	ESBotClientId  string `env:"EVENTSUB_BOT_CLIENT_ID" env-required:"true"`
+	ESBotBearer    string `env:"EVENTSUB_BOT_BEARER" env-required:"true"`
 	YoutubeKey     string `env:"YOUTUBEKEY" env-required:"true"`
 	MyPlaylistPath string `env:"MYPLAYLISTPATH" env-required:"true"`
 }

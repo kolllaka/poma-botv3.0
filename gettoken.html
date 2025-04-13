@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+	<meta charset="UTF-8">
+	<meta http-equiv="X-UA-Compatible" content="IE=edge">
+	<meta name="viewport" content="width=device-width, initial-scale=1.0">
+	<title>Get Bearer token</title>
+
+</head>
+
+
+<body>
+	<a class="link" href>Connect
+		with Twitch</a>
+</body>
+
+<script>
+	const client_id = ""
+	const array_permission = [
+		"moderator:read:followers",
+		"channel:read:subscriptions",
+		"channel:read:subscriptions",
+		"channel:read:subscriptions",
+		"bits:read",
+	]
+	const set_permission = new Set(array_permission)
+
+	const permission = escapePermissionArray(set_permission)
+
+	function escapePermissionArray(set_permission) {
+		return Array.from(set_permission).map(escapePermission).join("+")
+	}
+
+	function escapePermission(permission) {
+		return permission
+			.replaceAll(":", "%3A")
+			.replaceAll()
+	}
+
+	const link_selector = document.querySelector('.link')
+	const link = `https://id.twitch.tv/oauth2/authorize?
+		response_type=token&
+		client_id=${client_id}&
+		redirect_uri=https://localhost&
+		scope=${permission}`
+	link_selector.href = link
+
+</script>
+
+</html>

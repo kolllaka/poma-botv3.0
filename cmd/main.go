@@ -1,7 +1,6 @@
 package main
 
 import (
-	"bytes"
 	"encoding/json"
 	"fmt"
 	"io"
@@ -23,6 +22,7 @@ import (
 	"github.com/kolllaka/poma-botv3.0/internal/services"
 	"github.com/kolllaka/poma-botv3.0/internal/storage/sqlite"
 	"github.com/kolllaka/poma-botv3.0/pkg/config"
+	eventsub "github.com/kolllaka/poma-botv3.0/pkg/event-sub"
 	"github.com/kolllaka/poma-botv3.0/pkg/logging"
 	psqlite "github.com/kolllaka/poma-botv3.0/pkg/sqlite"
 	"github.com/kolllaka/poma-botv3.0/pkg/youtubeapi"
@@ -124,20 +124,73 @@ func main() {
 	rewards.InitRewards(rewardsCfg)
 	rewards.HandleReward()
 
-	// ! chan
-	isSwitch := false
-	var notificationsReader chan model.NotificationMessage = make(chan model.NotificationMessage, 2)
-	go func() {
-		for {
-			isSwitch = !isSwitch
-			time.Sleep(15 * time.Second)
-			// notificationsReader <- getRaidMsg("kolliaka", 10)
-			// notificationsReader <- getSubscribeMsg("kolliaka", 2000, isSwitch)
-			// notificationsReader <- getFollowMsg("kolliaka")
-			// notificationsReader <- getSubgiftMsg("kolliaka", 10, 2000, 2000, isSwitch)
-			// notificationsReader <- getCheerMsg("kolliaka", "хочу передать привет собаке", 2000, isSwitch)
-			notificationsReader <- getResubscribeMsg("kolliaka", "хочу передать привет собаке", 2000, 12)
+	// event sub
+	es := eventsub.New(eventsub.Secrets{
+		SecretClientId: envCfg.ESBotClientId,
+		SecretBearer:   envCfg.ESBotBearer,
+	})
+	es.SubscribeChannelFollow(eventsub.Condition{
+		BroadcasterUserId: fmt.Sprint(envCfg.UserId),
+		ModeratorUserId:   fmt.Sprint(envCfg.ESBotId),
+	})
+	es.SubscribeChannelRaid(eventsub.Condition{
+		ToBroadcasterUserID: fmt.Sprint(envCfg.UserId),
+	})
+	es.SubscribeChannelSubscribe(eventsub.Condition{
+		BroadcasterUserId: fmt.Sprint(envCfg.UserId),
+	})
+	es.SubscribeChannelSubscribeGift(eventsub.Condition{
+		BroadcasterUserId: fmt.Sprint(envCfg.UserId),
+	})
+	es.SubscribeChannelReSubscribe(eventsub.Condition{
+		BroadcasterUserId: fmt.Sprint(envCfg.UserId),
+	})
+	es.SubscribeChannelCheer(eventsub.Condition{
+		BroadcasterUserId: fmt.Sprint(envCfg.UserId),
+	})
+	if err := es.Connect(); err != nil {
+		logger.Error("Error to connect twitch event sub", logging.ErrAttr(err))
 
+		os.Exit(1)
+	}
+
+	var notificationsReader chan model.NotificationMessage = make(chan model.NotificationMessage)
+
+	go func() {
+		for msg := range es.GetEventChan() {
+			switch msg.EventType {
+			case eventsub.TYPE_CHANNEL_FOLLOW:
+				notificationsReader <- model.NotificationMessage{
+					RouteType: model.NOTIFICATION_FOLLOW,
+					Data:      msg.Event,
+				}
+			case eventsub.TYPE_CHANNEL_RAID:
+				notificationsReader <- model.NotificationMessage{
+					RouteType: model.NOTIFICATION_RAID,
+					Data:      msg.Event,
+				}
+			case eventsub.TYPE_CHANNEL_SUBSCRIBE:
+				notificationsReader <- model.NotificationMessage{
+					RouteType: model.NOTIFICATION_SUBSCRIBE,
+					Data:      msg.Event,
+				}
+			case eventsub.TYPE_CHANNEL_SUBSCRIBE_GIFT:
+				notificationsReader <- model.NotificationMessage{
+					RouteType: model.NOTIFICATION_SUBGIFT,
+					Data:      msg.Event,
+				}
+			case eventsub.TYPE_CHANNEL_RE_SUBSCRIBE:
+				notificationsReader <- model.NotificationMessage{
+					RouteType: model.NOTIFICATION_RESUBSCRIBE,
+					Data:      msg.Event,
+				}
+			case eventsub.TYPE_CHANNEL_CHEER:
+				notificationsReader <- model.NotificationMessage{
+					RouteType: model.NOTIFICATION_CHEER,
+					Data:      msg.Event,
+				}
+
+			}
 		}
 	}()
 
@@ -165,29 +218,6 @@ func main() {
 
 	go http.ListenAndServe(":"+strconv.Itoa(envCfg.Port), router)
 	logger.Info("server start", logging.IntAttr("port", envCfg.Port))
-	//
-	//
-	//
-	//
-	//
-
-	//
-	//
-	//
-	//
-	// twitchReader <- model.RewardMessage{
-	// 	IsReward: true,
-	// 	Name:     "гадание",
-	// 	Username: "Kollliaka",
-	// 	Text:     "",
-	// }
-
-	// twitchReader <- model.RewardMessage{
-	// 	IsReward: true,
-	// 	Name:     "музик",
-	// 	Username: "Kolliaka",
-	// 	Text:     "https://www.youtube.com/watch?v=jO7UnKF-tEw",
-	// }
 
 	sc := make(chan os.Signal, 1)
 	signal.Notify(sc, syscall.SIGINT, syscall.SIGTERM, syscall.SIGQUIT, syscall.SIGHUP)
@@ -229,143 +259,5 @@ func onMessage(shard int, topic string, data []byte) {
 		}
 
 		twitchReader <- rmsg
-	}
-}
-
-// !
-type raidMsg struct {
-	FromBroadcasterUserName string `json:"from_broadcaster_user_name,omitempty"`
-	Viewers                 int    `json:"viewers,omitempty"`
-}
-
-func getRaidMsg(name string, viewers int) model.NotificationMessage {
-	var network bytes.Buffer
-	json.NewEncoder(&network).Encode(raidMsg{
-		FromBroadcasterUserName: name,
-		Viewers:                 viewers,
-	})
-
-	return model.NotificationMessage{
-		"raid",
-		network.Bytes(),
-	}
-}
-
-type subscribeMsg struct {
-	UserName string `json:"user_name,omitempty"`
-	Tier     int    `json:"tier,omitempty"`
-	IsGift   bool   `json:"is_gift,omitempty"`
-}
-
-func getSubscribeMsg(name string, tier int, isGift bool) model.NotificationMessage {
-	var network bytes.Buffer
-	json.NewEncoder(&network).Encode(subscribeMsg{
-		UserName: name,
-		Tier:     tier,
-		IsGift:   isGift,
-	})
-
-	return model.NotificationMessage{
-		"subscribe",
-		network.Bytes(),
-	}
-}
-
-type followMsg struct {
-	UserName string `json:"user_name,omitempty"`
-}
-
-func getFollowMsg(name string) model.NotificationMessage {
-	var network bytes.Buffer
-	json.NewEncoder(&network).Encode(subscribeMsg{
-		UserName: name,
-	})
-
-	return model.NotificationMessage{
-		"follow",
-		network.Bytes(),
-	}
-}
-
-type subgiftMsg struct {
-	UserName        string `json:"user_name,omitempty"`
-	Total           int    `json:"total,omitempty"`
-	Tier            int    `json:"tier,omitempty"`
-	CumulativeTotal int    `json:"cumulative_total,omitempty"`
-	IsAnonymous     bool   `json:"is_anonymous,omitempty"`
-}
-
-func getSubgiftMsg(name string,
-	total int,
-	tier int,
-	cumulative_total int,
-	is_anonymous bool,
-) model.NotificationMessage {
-	var network bytes.Buffer
-	json.NewEncoder(&network).Encode(subgiftMsg{
-		UserName:        name,
-		Total:           total,
-		Tier:            tier,
-		CumulativeTotal: cumulative_total,
-		IsAnonymous:     is_anonymous,
-	})
-
-	return model.NotificationMessage{
-		"subgift",
-		network.Bytes(),
-	}
-}
-
-type cheerMsg struct {
-	UserName    string `json:"user_name,omitempty"`
-	Message     string `json:"message,omitempty"`
-	Bits        int    `json:"bits,omitempty"`
-	IsAnonymous bool   `json:"is_anonymous,omitempty"`
-}
-
-func getCheerMsg(
-	name string,
-	message string,
-	bits int,
-	is_anonymous bool,
-) model.NotificationMessage {
-	var network bytes.Buffer
-	json.NewEncoder(&network).Encode(cheerMsg{
-		UserName:    name,
-		Message:     message,
-		Bits:        bits,
-		IsAnonymous: is_anonymous,
-	})
-
-	return model.NotificationMessage{
-		"cheer",
-		network.Bytes(),
-	}
-}
-
-type resubscribeMsg struct {
-	UserName         string `json:"user_name,omitempty"`
-	Message          string `json:"message,omitempty"`
-	Tier             int    `json:"tier,omitempty"`
-	CumulativeMonths int    `json:"cumulative_months,omitempty"`
-}
-
-func getResubscribeMsg(
-	user string,
-	message string,
-	tier int,
-	month int,
-) model.NotificationMessage {
-	var network bytes.Buffer
-	json.NewEncoder(&network).Encode(resubscribeMsg{
-		UserName:         user,
-		Message:          message,
-		Tier:             tier,
-		CumulativeMonths: month,
-	})
-
-	return model.NotificationMessage{
-		"resubscribe",
-		network.Bytes(),
 	}
 }

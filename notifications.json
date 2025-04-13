@@ -39,7 +39,7 @@
 				},
 				{
 					"conditions": {
-						"viewers": 2
+						"viewers": 1
 					},
 					"fields": {
 						"title": "${channel} зарейдил на ${count} зрителя",
